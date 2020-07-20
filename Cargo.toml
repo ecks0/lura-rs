@@ -14,7 +14,6 @@ thiserror = "1.0.20"
 num = "0.3.0"
 num-traits = "0.2.12"
 serde = "1.0.114"
-shlex = "0.1.1"
 anyhow = "1.0.31"
 tokio = { version = "0.2.21", features = ["full"] }
 async-std = "1.6.2"
