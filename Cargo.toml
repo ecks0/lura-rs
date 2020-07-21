@@ -17,3 +17,4 @@ serde = "1.0.114"
 anyhow = "1.0.31"
 tokio = { version = "0.2.21", features = ["full"] }
 async-std = "1.6.2"
+tokio-compat = "0.1.6"
