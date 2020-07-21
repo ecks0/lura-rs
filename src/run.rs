@@ -3,11 +3,11 @@ use std::{
   ffi::{OsStr, OsString},
   process::Stdio,
 };
-use thiserror::Error;
+use thiserror;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process;
-use tokio::runtime::Runtime;
 use tokio::task;
+use crate::runtime::tokio::block_on_local;
 
 const _NOARGS: Vec<OsString> = Vec::new();
 pub const NOARGS: &Vec<OsString> = &_NOARGS;
@@ -15,11 +15,11 @@ pub const NOARGS: &Vec<OsString> = &_NOARGS;
 /////
 // Errors
 
-#[derive(Error, Debug)]
-pub enum RunError {
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
 
   #[error("Command exited with unexpected status code `{0}`")]
-  WrongExitCode(i32),
+  UnexpectedExitCode(i32),
 
   #[error("Child process returned no exit code")]
   ExitCodeMissing,
@@ -32,6 +32,9 @@ pub enum RunError {
 
   #[error(transparent)]
   TaskJoinError(#[from] tokio::task::JoinError),
+
+  #[error(transparent)]
+  RuntimeError(#[from] crate::runtime::Error),
 }
 
 /////
@@ -85,7 +88,7 @@ impl Runner {
   }
 
   pub fn cwd(&mut self, cwd: &str) -> &mut Self {
-    self.cwd = Some(cwd.to_string());
+    self.cwd = Some(cwd.to_owned());
     self
   }
 
@@ -135,7 +138,7 @@ impl Runner {
     self
   }
 
-  pub async fn run_async<I, S>(&self, bin: &str, args: I) -> Result<Output, RunError>
+  pub async fn run_async<I, S>(&self, bin: &str, args: I) -> Result<Output, Error>
   where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -156,26 +159,25 @@ impl Runner {
       .stdout(Stdio::piped())
       .stderr(Stdio::piped())
       .spawn()?;
-    let stdout_fd = child.stdout.take().ok_or(RunError::StdioHandleMissing("stdout"))?;
-    let stderr_fd = child.stderr.take().ok_or(RunError::StdioHandleMissing("stderr"))?;
+    let stdout_fd = child.stdout.take().ok_or(Error::StdioHandleMissing("stdout"))?;
+    let stderr_fd = child.stderr.take().ok_or(Error::StdioHandleMissing("stderr"))?;
     let stdout_future = task::spawn(read_stdout(stdout_fd, self.receive_stdout.clone(), self.capture));
     let stderr_future = task::spawn(read_stderr(stderr_fd, self.receive_stderr.clone(), self.capture));
-    let code = child.await?.code().ok_or(RunError::ExitCodeMissing)?;
+    let code = child.await?.code().ok_or(Error::ExitCodeMissing)?;
     let stdout = stdout_future.await??;
     let stderr = stderr_future.await??;
-    if self.enforce_code.is_some() && self.enforce_code.unwrap() != code {
-      Err(RunError::WrongExitCode(code))
-    } else {
-      Ok(Output::new(code, stdout, stderr))
+    match self.enforce_code {
+      Some(enforce_code) if enforce_code != code => Err(Error::UnexpectedExitCode(code)),
+      _ => Ok(Output::new(code, stdout, stderr)),
     }
   }
 
-  pub fn run<I, S>(&self, bin: &str, args: I) -> Result<Output, RunError>
+  pub fn run<I, S>(&self, bin: &str, args: I) -> Result<Output, Error>
   where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
   {
-    Runtime::new()?.block_on(self.run_async(bin, args))
+    block_on_local(self.run_async(bin, args))?
   }
 }
 
@@ -183,7 +185,7 @@ async fn read_stdout(
   fd: process::ChildStdout,
   receivers: Vec<fn(&str)>,
   capture: bool
-) -> Result<Option<String>, RunError>
+) -> Result<Option<String>, Error>
 {
   let mut lines = BufReader::new(fd).lines();
   if capture {
@@ -206,7 +208,7 @@ async fn read_stderr(
   fd: process::ChildStderr,
   receivers: Vec<fn(&str)>,
   capture: bool
-) -> Result<Option<String>, RunError>
+) -> Result<Option<String>, Error>
 {
   let mut lines = BufReader::new(fd).lines();
   if capture {

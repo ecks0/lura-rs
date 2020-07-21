@@ -1,15 +1,27 @@
-use crate::run;
-use tokio::runtime::Runtime;
+use thiserror;
+use crate::{
+  run,
+  runtime::tokio::block_on_local,
+};
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+  
+  #[error(transparent)]
+  RunError(#[from] crate::run::Error),
+
+  #[error(transparent)]
+  RuntimeTokioError(#[from] crate::runtime::Error),
+}
 
 /////
 // build
 
 pub async fn build_async(
   runner: &run::Runner,
-  docker: &str,
   target: &str,
   tag: Option<&str>,
-) -> Result<run::Output, run::RunError>
+) -> Result<(), Error>
 {
   let mut args = vec!["build"];
   if let Some(tag) = &tag {
@@ -17,17 +29,17 @@ pub async fn build_async(
     args.push(tag);
   }
   args.push(target);
-  runner.run_async(docker, args).await
+  runner.run_async("docker", args).await?;
+  Ok(())
 }
 
 pub fn build(
   runner: &run::Runner,
-  docker: &str,
   target: &str,
   tag: Option<&str>,
-) -> Result<run::Output, run::RunError>
+) -> Result<(), Error>
 {
-  Runtime::new()?.block_on(build_async(runner, docker, target, tag))
+  block_on_local(build_async(runner, target, tag))?
 }
 
 /////
@@ -35,22 +47,21 @@ pub fn build(
 
 pub async fn tag_async(
   runner: &run::Runner,
-  docker: &str,
   src: &str,
   dst: &str,
-) -> Result<run::Output, run::RunError>
+) -> Result<(), Error>
 {
-  runner.run_async(docker, vec!["tag", src, dst]).await
+  runner.run_async("docker", vec!["tag", src, dst]).await?;
+  Ok(())
 }
 
 pub fn tag(
   runner: &run::Runner,
-  docker: &str,
   src: &str,
   dst: &str,
-) -> Result<run::Output, run::RunError>
+) -> Result<(), Error>
 {
-  Runtime::new()?.block_on(tag_async(runner, docker, src, dst))
+  block_on_local(tag_async(runner, src, dst))?
 }
 
 /////
@@ -58,18 +69,17 @@ pub fn tag(
 
 pub async fn push_async(
   runner: &run::Runner,
-  docker: &str,
   target: &str,
-) -> Result<run::Output, run::RunError>
+) -> Result<(), Error>
 {
-  runner.run_async(docker, vec!["push", target]).await
+  runner.run_async("docker", vec!["push", target]).await?;
+  Ok(())
 }
 
 pub fn push(
   runner: &run::Runner,
-  docker: &str,
   target: &str,
-) -> Result<run::Output, run::RunError>
+) -> Result<(), Error>
 {
-  Runtime::new()?.block_on(push_async(runner, docker, target))
+  block_on_local(push_async(runner, target))?
 }
