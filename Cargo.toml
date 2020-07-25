@@ -11,10 +11,21 @@ description = "Devops development helpers"
 
 [dependencies]
 thiserror = "1.0.20"
+anyhow = "1.0.31"
+
 num = "0.3.0"
 num-traits = "0.2.12"
+
 serde = "1.0.114"
-anyhow = "1.0.31"
-tokio = { version = "0.2.21", features = ["full"] }
-async-std = "1.6.2"
-tokio-compat = "0.1.6"
+
+async-std = { version = "1.6.2" }
+tokio-compat = { version = "0.1.6" }
+
+[dependencies.tokio]
+version = "0.2.21"
+features = [
+  "io-driver",
+  "io-util",
+  "process",
+  "time",
+]
