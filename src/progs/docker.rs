@@ -11,7 +11,7 @@ pub enum Error {
   RunError(#[from] crate::run::Error),
 
   #[error(transparent)]
-  RuntimeTokioError(#[from] crate::runtime::Error),
+  RuntimeError(#[from] crate::runtime::Error),
 }
 
 /////

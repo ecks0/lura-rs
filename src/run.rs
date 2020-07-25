@@ -31,7 +31,7 @@ pub enum Error {
   IOError(#[from] std::io::Error),
 
   #[error(transparent)]
-  TaskJoinError(#[from] tokio::task::JoinError),
+  TokioTaskJoinError(#[from] tokio::task::JoinError),
 
   #[error(transparent)]
   RuntimeError(#[from] crate::runtime::Error),
@@ -294,9 +294,7 @@ mod tests {
   fn test_reuse() {
     let mut runner = Runner::new();
     runner.run("/bin/false", NOARGS).unwrap();
-    runner.run("/bin/false", NOARGS).unwrap();
     runner.enforce();
-    runner.run("/bin/true", NOARGS).unwrap();
     runner.run("/bin/true", NOARGS).unwrap();
   }
 }

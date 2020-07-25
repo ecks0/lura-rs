@@ -206,7 +206,7 @@ where
   }
 }
 
-#[cfg(test1)]
+#[cfg(test)]
 mod tests {
 
   use anyhow::Error;
@@ -231,7 +231,7 @@ mod tests {
 
   #[test]
   fn test_expo_sleep() -> Result<(), Error> {
-    let expo: Expo<u64> = Expo::new(Some(9));
+    let expo: Expo<u64> = Expo::new(Some(6));
     expo.for_each(|i| {
       let now = time::Instant::now();
       println!("{:?} sleep start {:?}", i, now);
@@ -260,7 +260,7 @@ mod tests {
 
   #[test]
   fn test_fibo_sleep() -> Result<(), Error> {
-    let fibo: Fibo<u64> = Fibo::new(Some(9));
+    let fibo: Fibo<u64> = Fibo::new(Some(6));
     fibo.for_each(|i| {
       let now = time::Instant::now();
       println!("{:?} sleep start {:?}", i, now);
