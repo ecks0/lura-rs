@@ -23,7 +23,7 @@ pub struct Config(Value);
 
 impl Config {
 
-  pub fn new(configs: HashMap<&str, &str>, key: &str) -> Result<Self> {
+  pub fn new(configs: &HashMap<&str, &str>, key: &str) -> Result<Self> {
     let target = configs.get(key).ok_or_else(|| Error::ConfigMissing(key.to_owned()))?;
     let target = target.parse::<Value>()?;
     match configs.get("default") {
