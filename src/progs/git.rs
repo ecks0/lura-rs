@@ -69,7 +69,7 @@ impl Clone {
     if let Some(path) = &self.path {
       args.push(path);
     }
-    runner.run("git", args)?;
+    runner.run_async("git", args).await?;
     Ok(())
   }
 
