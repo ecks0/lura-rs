@@ -43,18 +43,23 @@ impl Config {
   pub fn as_str(&self, key: &str) -> Option<String> {
     self
       .get(key)
-      .and_then(|k| k.as_str().and_then(|k| Some(k.to_owned())))
+      .and_then(|v| {
+        v.as_str()
+          .and_then(|v| {
+            Some(v.to_owned())
+          })
+      })
   }
 
   pub fn as_bool(&self, key: &str) -> Option<bool> {
-    self.get(key).and_then(|k| k.as_bool())
+    self.get(key).and_then(|v| v.as_bool())
   }
 
   pub fn as_int(&self, key: &str) -> Option<i64> {
-    self.get(key).and_then(|k| k.as_integer())
+    self.get(key).and_then(|v| v.as_integer())
   }
 
   pub fn as_float(&self, key: &str) -> Option<f64> {
-    self.get(key).and_then(|k| k.as_float())
+    self.get(key).and_then(|v| v.as_float())
   }
 }

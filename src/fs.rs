@@ -1,14 +1,12 @@
 use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
-use std::io::ErrorKind as IoErrorKind;
-use std::env;
-use std::fs::{
-  create_dir,
-  read_to_string,
-  remove_dir_all,
-  write as write_file,
+use std::{
+  io::ErrorKind as IoErrorKind,
+  env,
+  path::Path,
+  result::Result as StdResult,
+  io::Error as IoError,
 };
-use std::path::Path;
 use thiserror;
 
 #[derive(thiserror::Error, Debug)]
@@ -18,10 +16,38 @@ pub enum Error {
   Utf8,
 
   #[error(transparent)]
-  IoError(#[from] std::io::Error),
+  Io(#[from] std::io::Error),
 }
 
 type Result<T> = std::result::Result<T, Error>;
+
+#[inline]
+pub fn mkdir<P: AsRef<Path>>(path: P) -> StdResult<(), IoError> {
+  std::fs::create_dir(&path)
+}
+
+#[inline]
+pub fn rm(path: &str) -> StdResult<(), IoError> {
+  match Path::new(path).is_dir() {
+    true => std::fs::remove_dir_all(path),
+    false => std::fs::remove_file(path),
+  }
+}
+
+#[inline]
+pub fn load<P: AsRef<Path>>(path: P) -> StdResult<Vec<u8>, IoError> {
+  std::fs::read(path)
+}
+
+#[inline]
+pub fn loads<P: AsRef<Path>>(path: P) -> StdResult<String, IoError> {
+  std::fs::read_to_string(path)
+}
+
+#[inline]
+pub fn dump<P: AsRef<Path>, D: AsRef<[u8]>>(path: P, data: D) -> StdResult<(), IoError> {
+  std::fs::write(path, data)
+}
 
 pub fn tempdir(prefix: &str) -> Result<String> {
 
@@ -35,11 +61,11 @@ pub fn tempdir(prefix: &str) -> Result<String> {
   let temp_root_file = env::temp_dir();
   let temp_root = temp_root_file.to_str().ok_or(Error::Utf8)?;
   loop {
-    let temp_dir = format!("{0}/cdhub.{1}.{2}", temp_root, prefix, randstr());
+    let temp_dir = format!("{0}/{1}.{2}", temp_root, prefix, randstr());
     if Path::new(&temp_dir).exists() {
       continue;
     }
-    match create_dir(&temp_dir) {
+    match mkdir(&temp_dir) {
       Ok(()) => return Ok(temp_dir),
       Err(err) => {
         match err.kind() {
@@ -49,21 +75,4 @@ pub fn tempdir(prefix: &str) -> Result<String> {
       },
     }
   }
-}
-
-#[inline]
-pub fn rm(path: &str) -> Result<()> {
-  remove_dir_all(path)?;
-  Ok(())
-}
-
-#[inline]
-pub fn dump<P: AsRef<Path>, D: AsRef<[u8]>>(path: P, data: D) -> Result<()> {
-  write_file(path, data)?;
-  Ok(())
-}
-
-#[inline]
-pub fn loads<P: AsRef<Path>>(path: P) -> Result<String> {
-  Ok(read_to_string(path)?)
 }
