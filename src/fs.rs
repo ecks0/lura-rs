@@ -27,8 +27,8 @@ pub fn mkdir<P: AsRef<Path>>(path: P) -> StdResult<(), IoError> {
 }
 
 #[inline]
-pub fn rm(path: &str) -> StdResult<(), IoError> {
-  match Path::new(path).is_dir() {
+pub fn rm<P: AsRef<Path>>(path: P) -> StdResult<(), IoError> {
+  match path.as_ref().is_dir() {
     true => std::fs::remove_dir_all(path),
     false => std::fs::remove_file(path),
   }
