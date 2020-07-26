@@ -29,9 +29,9 @@ pub struct Clone {
 
 impl Clone {
 
-  pub fn new(repo_url: &str) -> Self {
+  pub fn new(url: &str) -> Self {
     Self {
-      url: repo_url.to_owned(),
+      url: url.to_owned(),
       branch: None,
       single_branch: None,
       path: None,
