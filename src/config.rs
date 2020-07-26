@@ -20,7 +20,7 @@ impl Config {
     Ok(Self(contents.parse::<Value>()?))
   }
 
-  pub fn update(&mut self, other: &mut Config) {
+  pub fn update(&mut self, other: &Config) {
     merge_toml(&mut self.0, &other.0)
   }
 
