@@ -8,6 +8,7 @@ use std::{
   io::Error as IoError,
 };
 use thiserror;
+use crate::run::Runner;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -17,6 +18,9 @@ pub enum Error {
 
   #[error(transparent)]
   Io(#[from] std::io::Error),
+
+  #[error(transparent)]
+  Run(#[from] crate::run::Error),
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -66,7 +70,12 @@ pub fn tempdir(prefix: &str) -> Result<String> {
       continue;
     }
     match mkdir(&temp_dir) {
-      Ok(()) => return Ok(temp_dir),
+      Ok(()) => {
+        // FIXME set_mode doesn't actually set the mode
+        // File::create(&path)?.metadata()?.permissions().set_mode(0o600);
+        Runner::new().enforce().run("chmod", ["0700", &temp_dir].iter())?;
+        return Ok(temp_dir);
+      },
       Err(err) => {
         match err.kind() {
           IoErrorKind::AlreadyExists => continue,
