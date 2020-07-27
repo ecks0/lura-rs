@@ -249,7 +249,7 @@ mod tests {
       .receive_stderr(receive_stderr)
       .capture()
       .enforce()
-      .run("echo", vec!["hello", "test"])
+      .run("echo", ["hello", "test"].iter())
       .unwrap();
     assert_eq!(output.code, 0);
     assert_eq!(output.stdout.unwrap(), "hello test\n");
@@ -273,7 +273,7 @@ mod tests {
       .receive_stderr(receive_stderr)
       .capture()
       .enforce()
-      .run("sh", vec!["-c", "echo hello test >&2"])
+      .run("sh", ["-c", "echo hello test >&2"].iter())
       .unwrap();
     assert_eq!(output.code, 0);
     assert_eq!(output.stdout.unwrap(), "");

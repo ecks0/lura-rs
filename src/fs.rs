@@ -54,7 +54,7 @@ pub fn tempdir(prefix: &str) -> Result<String> {
   fn randstr() -> String {
     thread_rng()
       .sample_iter(&Alphanumeric)
-      .take(8)
+      .take(12)
       .collect()
   }
 

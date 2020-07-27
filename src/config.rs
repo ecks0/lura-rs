@@ -24,15 +24,15 @@ impl Config {
     merge_toml(&mut self.0, &other.0)
   }
 
-  pub fn get(&self, key: &str) -> Option<Value> { 
+  pub fn get(&self, key: &str) -> Option<&Value> { 
 
-    fn get(keys: &[&str], value: &Value) -> Option<Value> {
+    fn get<'a>(keys: &[&str], value: &'a Value) -> Option<&'a Value> {
       let next_value = match &value.get(keys[0]) {
         Some(next_value) => *next_value,
         None => return None,
       };
       match keys.len() {
-        1 => Some(next_value.clone()),
+        1 => Some(next_value),
         _ => get(&keys[1..], next_value),
       }
     }
