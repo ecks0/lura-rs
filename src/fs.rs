@@ -1,15 +1,18 @@
 use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
 use std::{
-  io::ErrorKind as IoErrorKind,
   env,
+  ffi::OsString,
   fs::{
     Permissions,
     set_permissions,
   },
   ops::Deref,
   os::unix::fs::PermissionsExt,
-  path::Path,
+  path::{
+    Path,
+    PathBuf,
+  },
 };
 use tempdir as tempdir_rs;
 use thiserror;
@@ -18,7 +21,7 @@ use thiserror;
 pub enum Error {
 
   #[error("Utf8 conversion error")]
-  Utf8,
+  Utf8(OsString),
 
   #[error(transparent)]
   Io(#[from] std::io::Error),
@@ -62,10 +65,11 @@ pub fn chmod<P: AsRef<Path>>(path: P, mode: u32) -> Result<()> {
 
 #[inline]
 pub fn rm<P: AsRef<Path>>(path: P) -> Result<()> {
-  match path.as_ref().is_dir() {
-    true => Ok(std::fs::remove_dir_all(path)?),
-    false => Ok(std::fs::remove_file(path)?),
-  }
+  let result = match path.as_ref().is_dir() {
+    true => std::fs::remove_dir_all(path)?,
+    false => std::fs::remove_file(path)?,
+  };
+  Ok(result)
 }
 
 #[inline]
@@ -83,6 +87,25 @@ pub fn dump<P: AsRef<Path>, D: AsRef<[u8]>>(path: P, data: D) -> Result<()> {
   Ok(std::fs::write(path, data)?)
 }
 
+#[inline]
+pub fn path_to_string(path: &Path) -> Result<String> {
+  let result = path
+    .to_path_buf()
+    .into_os_string()
+    .into_string()
+    .map_err(|e| Error::Utf8(e))?;
+  Ok(result)
+}
+
+#[inline]
+pub fn path_buf_to_string(path: PathBuf) -> Result<String> {
+  let result = path
+    .into_os_string()
+    .into_string()
+    .map_err(|e| Error::Utf8(e))?;
+  Ok(result)
+}
+
 pub fn tempdir(prefix: &str) -> Result<String> {
 
   fn randstr() -> String {
@@ -92,10 +115,8 @@ pub fn tempdir(prefix: &str) -> Result<String> {
       .collect()
   }
 
-  let temp_root_file = env::temp_dir();
-  let temp_root = temp_root_file.to_str().ok_or(Error::Utf8)?;
   loop {
-    let temp_dir = format!("{0}/{1}.{2}", temp_root, prefix, randstr());
+    let temp_dir = format!("{0}/{1}.{2}", path_buf_to_string(env::temp_dir())?, prefix, randstr());
     match mkdir(&temp_dir) {
       Ok(()) => {
         chmod(&temp_dir, 0o700)?;
@@ -103,7 +124,7 @@ pub fn tempdir(prefix: &str) -> Result<String> {
       },
       Err(err) => {
         if let Error::Io(err) = &err {
-          if let IoErrorKind::AlreadyExists = err.kind() { continue; }
+          if let std::io::ErrorKind::AlreadyExists = err.kind() { continue; }
         }
         return Err(err);
       },
