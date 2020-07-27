@@ -3,10 +3,14 @@ use rand::distributions::Alphanumeric;
 use std::{
   io::ErrorKind as IoErrorKind,
   env,
+  // fs::File,
+  // os::unix::fs::PermissionsExt,
+  io::Error as IoError,
+  ops::Deref,
   path::Path,
   result::Result as StdResult,
-  io::Error as IoError,
 };
+use tempdir as tempdir_rs;
 use thiserror;
 use crate::run::Runner;
 
@@ -24,6 +28,30 @@ pub enum Error {
 }
 
 type Result<T> = std::result::Result<T, Error>;
+
+// wrap tempdir::TempDir to set 0700
+
+#[derive(Debug)]
+pub struct TempDir(tempdir_rs::TempDir);
+
+impl TempDir {
+  pub fn new(prefix: &str) -> Result<Self> {
+    let this = Self(tempdir_rs::TempDir::new(prefix)?);
+    // FIXME set_mode doesn't actually set the mode
+    // File::create(this.0.path())?.metadata()?.permissions().set_mode(0o700);
+    let path = this.0.path().to_str().ok_or(Error::Utf8)?;
+    Runner::new().enforce().run("chmod", ["0700", &path].iter())?;
+    Ok(this)
+  }
+}
+
+impl Deref for TempDir {
+  type Target = tempdir_rs::TempDir;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
 
 #[inline]
 pub fn mkdir<P: AsRef<Path>>(path: P) -> StdResult<(), IoError> {
