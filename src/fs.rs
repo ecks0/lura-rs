@@ -3,16 +3,16 @@ use rand::distributions::Alphanumeric;
 use std::{
   io::ErrorKind as IoErrorKind,
   env,
-  // fs::File,
-  // os::unix::fs::PermissionsExt,
-  io::Error as IoError,
+  fs::{
+    Permissions,
+    set_permissions,
+  },
   ops::Deref,
+  os::unix::fs::PermissionsExt,
   path::Path,
-  result::Result as StdResult,
 };
 use tempdir as tempdir_rs;
 use thiserror;
-use crate::run::Runner;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -37,10 +37,7 @@ pub struct TempDir(tempdir_rs::TempDir);
 impl TempDir {
   pub fn new(prefix: &str) -> Result<Self> {
     let this = Self(tempdir_rs::TempDir::new(prefix)?);
-    // FIXME set_mode doesn't actually set the mode
-    // File::create(this.0.path())?.metadata()?.permissions().set_mode(0o700);
-    let path = this.0.path().to_str().ok_or(Error::Utf8)?;
-    Runner::new().enforce().run("chmod", ["0700", &path].iter())?;
+    chmod(this.0.path(), 0o700)?;
     Ok(this)
   }
 }
@@ -54,31 +51,36 @@ impl Deref for TempDir {
 }
 
 #[inline]
-pub fn mkdir<P: AsRef<Path>>(path: P) -> StdResult<(), IoError> {
-  std::fs::create_dir(&path)
+pub fn mkdir<P: AsRef<Path>>(path: P) -> Result<()> {
+  Ok(std::fs::create_dir(&path)?)
 }
 
 #[inline]
-pub fn rm<P: AsRef<Path>>(path: P) -> StdResult<(), IoError> {
+pub fn chmod<P: AsRef<Path>>(path: P, mode: u32) -> Result<()> {
+  Ok(set_permissions(path, Permissions::from_mode(mode))?)
+}
+
+#[inline]
+pub fn rm<P: AsRef<Path>>(path: P) -> Result<()> {
   match path.as_ref().is_dir() {
-    true => std::fs::remove_dir_all(path),
-    false => std::fs::remove_file(path),
+    true => Ok(std::fs::remove_dir_all(path)?),
+    false => Ok(std::fs::remove_file(path)?),
   }
 }
 
 #[inline]
-pub fn load<P: AsRef<Path>>(path: P) -> StdResult<Vec<u8>, IoError> {
-  std::fs::read(path)
+pub fn load<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
+  Ok(std::fs::read(path)?)
 }
 
 #[inline]
-pub fn loads<P: AsRef<Path>>(path: P) -> StdResult<String, IoError> {
-  std::fs::read_to_string(path)
+pub fn loads<P: AsRef<Path>>(path: P) -> Result<String> {
+  Ok(std::fs::read_to_string(path)?)
 }
 
 #[inline]
-pub fn dump<P: AsRef<Path>, D: AsRef<[u8]>>(path: P, data: D) -> StdResult<(), IoError> {
-  std::fs::write(path, data)
+pub fn dump<P: AsRef<Path>, D: AsRef<[u8]>>(path: P, data: D) -> Result<()> {
+  Ok(std::fs::write(path, data)?)
 }
 
 pub fn tempdir(prefix: &str) -> Result<String> {
@@ -94,21 +96,16 @@ pub fn tempdir(prefix: &str) -> Result<String> {
   let temp_root = temp_root_file.to_str().ok_or(Error::Utf8)?;
   loop {
     let temp_dir = format!("{0}/{1}.{2}", temp_root, prefix, randstr());
-    if Path::new(&temp_dir).exists() {
-      continue;
-    }
     match mkdir(&temp_dir) {
       Ok(()) => {
-        // FIXME set_mode doesn't actually set the mode
-        // File::create(&path)?.metadata()?.permissions().set_mode(0o600);
-        Runner::new().enforce().run("chmod", ["0700", &temp_dir].iter())?;
+        chmod(&temp_dir, 0o700)?;
         return Ok(temp_dir);
       },
       Err(err) => {
-        match err.kind() {
-          IoErrorKind::AlreadyExists => continue,
-          _ => return Err(Error::from(err)),
+        if let Error::Io(err) = &err {
+          if let IoErrorKind::AlreadyExists = err.kind() { continue; }
         }
+        return Err(err);
       },
     }
   }
