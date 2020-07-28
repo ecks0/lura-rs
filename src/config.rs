@@ -67,3 +67,12 @@ impl Config {
     self.get(key).and_then(|v| v.as_float())
   }
 }
+
+use templar::Document;
+
+impl From<Config> for Document {
+
+  fn from(config: Config) -> Document {
+    crate::template::toml_to_document(&config.value()).unwrap_or(Document::default())
+  }
+}

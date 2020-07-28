@@ -5,7 +5,6 @@ use templar::{
 };
 use thiserror;
 use toml::Value;
-use crate::config::Config;
 
 pub use templar::Document;
 
@@ -19,6 +18,8 @@ pub enum Error {
 type Result<T> = std::result::Result<T, Error>;
 
 pub fn toml_to_document(value: &Value) -> Option<Document> {
+  // convert a toml `Value` to a templar `Document`
+
   match value {
     Value::Table(table) => {
       let mut document = Document::default();
@@ -39,14 +40,9 @@ pub fn toml_to_document(value: &Value) -> Option<Document> {
   }
 }
 
-impl From<Config> for Document {
-
-  fn from(config: Config) -> Document {
-    toml_to_document(&config.value()).unwrap_or(Document::default())
-  }
-}
-
 pub fn expand(template: &str, env: Document) -> Result<String> {
+  // expand a `template` string using `env`
+  
   let template = Templar::global().parse(template)?;
   let context = StandardContext::new();
   context.set(env)?;
