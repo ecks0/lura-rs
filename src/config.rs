@@ -1,4 +1,5 @@
 use thiserror::Error;
+use templar::Document;
 use toml::Value;
 use crate::merge::merge_toml;
 
@@ -68,7 +69,11 @@ impl Config {
   }
 }
 
-use templar::Document;
+impl Clone for Config {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
 
 impl From<Config> for Document {
 
