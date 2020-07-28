@@ -5,3 +5,4 @@ pub mod merge;
 pub mod progs;
 pub mod run;
 pub mod runtime;
+pub mod template;

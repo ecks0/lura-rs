@@ -24,6 +24,10 @@ impl Config {
     merge_toml(&mut self.0, &other.0)
   }
 
+  pub fn value(&self) -> Value {
+    self.0.clone()
+  }
+
   pub fn get(&self, key: &str) -> Option<&Value> { 
 
     fn get<'a>(keys: &[&str], value: &'a Value) -> Option<&'a Value> {
