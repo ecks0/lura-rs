@@ -5,7 +5,7 @@ Deveops helpers.
 | Module           | Description                                            |
 | ---------------- | ------------------------------------------------------ |
 | `lura::backoff`  | backoff algorithms                                     |
-| `lura::config`   | cascading toml config files                            |
+| `lura::config`   | toml config files                                      |
 | `lura::fs`       | filesystem utilities                                   |
 | `lura::merge`    | toml and json merge functions                          |
 | `lura::progs`    | thin wrappers for cli programs                         |

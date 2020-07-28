@@ -163,9 +163,9 @@ impl Runner {
     let stderr_fd = child.stderr.take().ok_or(Error::StdioHandleMissing("stderr"))?;
     let stdout_future = task::spawn(read_stdout(stdout_fd, self.receive_stdout.clone(), self.capture));
     let stderr_future = task::spawn(read_stderr(stderr_fd, self.receive_stderr.clone(), self.capture));
-    let code = child.await?.code().ok_or(Error::ExitCodeMissing)?;
     let stdout = stdout_future.await??;
     let stderr = stderr_future.await??;
+    let code = child.await?.code().ok_or(Error::ExitCodeMissing)?;
     match self.enforce_code {
       Some(enforce_code) if enforce_code != code => Err(Error::UnexpectedExitCode(code)),
       _ => Ok(Output::new(code, stdout, stderr)),
