@@ -6,13 +6,19 @@ use crate::merge::merge_toml;
 #[derive(Error, Debug)]
 pub enum Error {
 
+  #[error("Config missing: `{0}`")]
+  ConfigMissing(String),
+
+  #[error("Config value missing: `{0}`")]
+  ConfigValueMissing(String),
+
   #[error(transparent)]
   TomlError(#[from] toml::de::Error),
 }
 
-type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Config(Value);
 
 impl Config {
@@ -69,15 +75,16 @@ impl Config {
   }
 }
 
-impl Clone for Config {
-    fn clone(&self) -> Self {
-        Self(self.0.clone())
-    }
-}
-
 impl From<Config> for Document {
 
   fn from(config: Config) -> Document {
+    crate::template::toml_to_document(&config.value()).unwrap_or(Document::default())
+  }
+}
+
+impl From<&Config> for Document {
+
+  fn from(config: &Config) -> Document {
     crate::template::toml_to_document(&config.value()).unwrap_or(Document::default())
   }
 }
