@@ -82,6 +82,7 @@ impl From<Config> for Document {
   }
 }
 
+// FIXME
 impl From<&Config> for Document {
 
   fn from(config: &Config) -> Document {
