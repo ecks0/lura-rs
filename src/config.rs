@@ -1,10 +1,18 @@
-use thiserror::Error;
-use templar::Document;
-use toml::Value;
-use crate::merge::merge_toml;
+use {
+  log::debug,
+  thiserror::Error,
+  templar::Document,
+  toml::Value,
+  crate::merge::merge_toml,
+};
+
+const MOD: &str = std::module_path!();
 
 #[derive(Error, Debug)]
 pub enum Error {
+
+  #[error("Value error: {0}")]
+  Value(&'static str),
 
   #[error("Config missing: `{0}`")]
   ConfigMissing(String),
@@ -18,7 +26,7 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Config(Value);
 
 impl Config {
@@ -82,10 +90,70 @@ impl From<Config> for Document {
   }
 }
 
-// FIXME
 impl From<&Config> for Document {
 
   fn from(config: &Config) -> Document {
     crate::template::toml_to_document(&config.value()).unwrap_or(Document::default())
   }
+}
+
+#[cfg(feature = "lua")]
+use {
+  rlua::{ Context, Error as LuaError, FromLua, Result as LuaResult, UserData, UserDataMethods },
+  std::sync::Arc,
+};
+
+#[cfg(feature = "lua")]
+impl From<Error> for LuaError {
+  fn from(err: Error) -> LuaError {
+    LuaError::ExternalError(Arc::new(err))
+  }
+}
+
+#[cfg(feature = "lua")]
+impl<'lua> FromLua<'lua> for Config {
+
+  fn from_lua(lua_value: rlua::Value<'lua>, _: rlua::Context<'lua>) -> LuaResult<Config> {
+    Ok(match &lua_value {
+      rlua::Value::UserData(config) => {
+        let config = config.borrow::<Config>()
+          .map_err(|_| Error::Value("Lua `UserData` is not a `Config`"))?;
+        Ok(Self(config.0.clone()))
+      },
+      _ => Err(Error::Value("Lua `Value` is not a `Config`")),
+    }?)
+  }
+}
+
+#[cfg(feature = "lua")]
+impl UserData for Config {
+
+  fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
+    methods.add_method("as_str", |_, this, args: (String,)| {
+      this.as_str(&args.0).ok_or_else(|| Error::ConfigValueMissing(args.0).into())
+    });
+    methods.add_method("as_bool", |_, this, args: (String,)| {
+      this.as_bool(&args.0).ok_or_else(|| Error::ConfigValueMissing(args.0).into())
+    });
+    methods.add_method("as_int", |_, this, args: (String,)| {
+      this.as_int(&args.0).ok_or_else(|| Error::ConfigValueMissing(args.0).into())
+    });
+    methods.add_method("as_float", |_, this, args: (String,)| {
+      this.as_float(&args.0).ok_or_else(|| Error::ConfigValueMissing(args.0).into())
+    });
+  }
+}
+
+#[cfg(feature = "lua")]
+pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
+
+  debug!(target: MOD, "Lua init");
+
+  let config = ctx.create_table()?;
+
+  config.set("new", ctx.create_function(|_, args: (String,)| { Ok(Config::new(&args.0)?) })?)?;
+
+  ctx.globals().set("config", config)?;
+
+  Ok(())
 }

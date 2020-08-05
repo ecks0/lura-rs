@@ -1,15 +1,21 @@
-use num::pow;
-use num_traits::{
-  int::PrimInt,
-  sign::Unsigned,
-  cast::{FromPrimitive, ToPrimitive},
+use {
+  num::pow,
+  num_traits::{
+    int::PrimInt,
+    sign::Unsigned,
+    cast::{FromPrimitive, ToPrimitive},
+  },
+  std::{
+    thread,
+    time,
+    ops::AddAssign,
+  },
 };
-use std::{
-  thread,
-  time,
-  ops::AddAssign,
+
+#[cfg(feature = "async")]
+use {
+  async_std::task,
 };
-use async_std::task;
 
 /////
 // Expo, exponential decay
@@ -48,6 +54,7 @@ impl<I: PrimInt + Unsigned> Expo<I> {
     }
   }
 
+  #[cfg(feature = "async")]
   pub async fn async_sleep(&mut self) -> bool {
     match self.next() {
       Some(value) => {
@@ -110,6 +117,7 @@ impl<I: PrimInt + Unsigned> Fibo<I> {
     }
   }
 
+  #[cfg(feature = "async")]
   pub async fn async_sleep(&mut self) -> bool {
     match self.next() {
       Some(value) => {
@@ -177,6 +185,7 @@ where
     }
   }
 
+  #[cfg(feature = "async")]
   pub async fn async_sleep(&mut self) -> bool {
     match self.next() {
       Some(value) => {

@@ -1,7 +1,6 @@
-use thiserror;
-use crate::{
-  run,
-  runtime::tokio::block_on_local,
+use {
+  thiserror,
+  crate::run,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -9,9 +8,6 @@ pub enum Error {
   
   #[error(transparent)]
   RunError(#[from] crate::run::Error),
-
-  #[error(transparent)]
-  RuntimeTokioError(#[from] crate::runtime::Error),
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -53,7 +49,7 @@ impl Clone {
     self
   }
 
-  pub async fn run_async(&self, runner: &run::Runner) -> Result<()> {
+  fn run_args(&self) -> Vec<&str> {
     let mut args = vec!["clone"];
     if let Some(branch) = &self.branch {
       args.push("-b");
@@ -69,12 +65,17 @@ impl Clone {
     if let Some(path) = &self.path {
       args.push(path);
     }
-    runner.run_async("git", args).await?;
-    Ok(())
+    args
   }
 
   pub fn run(&mut self, runner: &run::Runner) -> Result<()> {
-    block_on_local(self.run_async(runner))??;
+    runner.run("git", self.run_args())?;
+    Ok(())
+  }
+
+  #[cfg(feature = "async")]
+  pub async fn run_async(&self, runner: &run::Runner) -> Result<()> {
+    runner.run_async("git", self.run_args()).await?;
     Ok(())
   }
 }

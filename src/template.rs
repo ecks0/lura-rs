@@ -1,15 +1,26 @@
-use templar::{
-  Context,
-  StandardContext,
-  Templar,
+use {
+  log::debug,
+  templar::{
+    Context,
+    Document,
+    StandardContext,
+    Templar,
+  },
+  thiserror,
+  toml::Value,
+  crate::{
+    config::Config,
+    fs::dump,
+  },
 };
-use thiserror;
-use toml::Value;
 
-pub use templar::Document;
+const MOD: &str = std::module_path!();
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+
+  #[error(transparent)]
+  LuraFs(#[from] crate::fs::Error),
 
   #[error(transparent)]
   Templar(#[from] templar::TemplarError),
@@ -17,7 +28,7 @@ pub enum Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-pub fn toml_to_document(value: &Value) -> Option<Document> {
+pub(crate) fn toml_to_document(value: &Value) -> Option<Document> {
   // convert a toml `Value` to a templar `Document`
 
   match value {
@@ -40,11 +51,45 @@ pub fn toml_to_document(value: &Value) -> Option<Document> {
   }
 }
 
-pub fn expand(template: &str, env: Document) -> Result<String> {
+pub fn expand_str(template: &str, config: &Config) -> Result<String> {
   // expand a `template` string using `env`
   
   let template = Templar::global().parse(template)?;
   let context = StandardContext::new();
-  context.set(env)?;
+  context.set(config)?;
   Ok(template.render(&context)?)
+}
+
+pub fn expand_file(template: &str, config: &Config, path: &str) -> Result<()> {
+  Ok(dump(path, expand_str(template, config)?)?)
+}
+
+#[cfg(feature = "lua")]
+use {
+  rlua::{ Context as LuaContext, Error as LuaError, Result as LuaResult },
+  std::sync::Arc,
+};
+
+#[cfg(feature = "lua")]
+impl From<Error> for LuaError {
+  fn from(err: Error) -> LuaError {
+    LuaError::ExternalError(Arc::new(err))
+  }
+}
+
+#[cfg(feature = "lua")]
+pub(crate) fn lua_init(ctx: &LuaContext) -> LuaResult<()> {
+ 
+  debug!(target: MOD, "Lua init");
+
+  let template = ctx.create_table()?;
+
+  template.set("expand_str", ctx.create_function(|_, args: (String, Config)| {
+    Ok(expand_str(&args.0, &args.1)?)
+  })?)?;
+  template.set("expand_file", ctx.create_function(|_, args: (String, Config, String)| {
+    Ok(expand_file(&args.0, &args.1, &args.2)?)
+  })?)?;
+
+  Ok(())
 }

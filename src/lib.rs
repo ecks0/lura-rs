@@ -7,3 +7,6 @@ pub mod relics;
 pub mod run;
 pub mod runtime;
 pub mod template;
+
+#[cfg(feature = "lua")]
+pub mod lua;

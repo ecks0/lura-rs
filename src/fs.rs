@@ -1,22 +1,21 @@
-use rand::{thread_rng, Rng};
-use rand::distributions::Alphanumeric;
-use regex::Regex;
-use std::{
-  env,
-  ffi::OsString,
-  fs::{
-    Permissions,
-    set_permissions,
+use {
+  log::debug,
+  rand::{thread_rng, Rng},
+  rand::distributions::Alphanumeric,
+  regex::Regex,
+  std::{
+    env,
+    ffi::OsString,
+    fs::{Permissions, set_permissions},
+    ops::Deref,
+    os::unix::fs::PermissionsExt,
+    path::{Path, PathBuf}
   },
-  ops::Deref,
-  os::unix::fs::PermissionsExt,
-  path::{
-    Path,
-    PathBuf,
-  },
+  tempdir as tempdir_rs,
+  thiserror,
 };
-use tempdir as tempdir_rs;
-use thiserror;
+
+const MOD: &str = std::module_path!();
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -151,4 +150,40 @@ pub fn tempdir(prefix: &str) -> Result<String> {
       },
     }
   }
+}
+
+#[cfg(feature = "lua")]
+use {
+  rlua::{ Context, Error as LuaError, Result as LuaResult },
+  std::sync::Arc,
+};
+
+
+#[cfg(feature = "lua")]
+impl From<Error> for LuaError {
+  fn from(err: Error) -> LuaError {
+    LuaError::ExternalError(Arc::new(err))
+  }
+}
+
+#[cfg(feature = "lua")]
+pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
+
+  debug!(target: MOD, "Lua init");
+
+  let fs = ctx.create_table()?;
+
+  fs.set("mkdir", ctx.create_function(|_, args: (String,)| Ok(mkdir(&args.0)?))?)?;
+  fs.set("chmod", ctx.create_function(|_, args: (String, u32)| Ok(chmod(&args.0, args.1)?))?)?;
+  fs.set("rm", ctx.create_function(|_, args: (String,)| Ok(rm(&args.0)?))?)?;
+  fs.set("loads", ctx.create_function(|_, args: (String,)| Ok(loads(&args.0)?))?)?;
+  fs.set("dump", ctx.create_function(|_, args: (String, String)| Ok(dump(&args.0, &args.1)?))?)?;
+  fs.set("replace_line", ctx.create_function(|_, args: (String, String, String)| {
+    Ok(replace_line(&args.0, &args.1, &args.2)?)
+  })?)?;
+  fs.set("tempdir", ctx.create_function(|_, args: (String,)| Ok(tempdir(&args.0)?))?)?;
+
+  ctx.globals().set("fs", fs)?;
+
+  Ok(())
 }
