@@ -1,5 +1,6 @@
 use rand::{thread_rng, Rng};
 use rand::distributions::Alphanumeric;
+use regex::Regex;
 use std::{
   env,
   ffi::OsString,
@@ -26,6 +27,9 @@ pub enum Error {
   #[error(transparent)]
   Io(#[from] std::io::Error),
 
+  #[error(transparent)]
+  Regex(#[from] regex::Error),
+  
   #[error(transparent)]
   Run(#[from] crate::run::Error),
 }
@@ -104,6 +108,23 @@ pub fn path_buf_to_string(path: PathBuf) -> Result<String> {
     .into_string()
     .map_err(|e| Error::Utf8(e))?;
   Ok(result)
+}
+
+pub fn replace_line<P: AsRef<Path>>(path: P, regexp: &str, replace: &str) -> Result<usize> {
+  let re = Regex::new(regexp)?;
+  let mut matched = 0usize;
+  let mut output = String::new();
+  for line in loads(&path)?.split("\n") { // FIXME
+    if re.is_match(line) {
+      matched += 1;
+      output.push_str(&re.replace_all(line, replace).into_owned());
+    } else {
+      output.push_str(line);
+    };
+    output.push_str("\n");
+  }
+  if matched > 0 { dump(&path, output)?; }
+  Ok(matched)
 }
 
 pub fn tempdir(prefix: &str) -> Result<String> {
