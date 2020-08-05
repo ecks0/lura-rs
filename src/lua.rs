@@ -33,6 +33,7 @@ pub fn init(ctx: &Context) -> Result<()> {
   crate::progs::docker::lua_init(ctx)?;
   crate::config::lua_init(ctx)?;
   crate::fs::lua_init(ctx)?;
+  crate::inflect::lua_init(ctx)?;
   crate::run::lua_init(ctx)?;
   crate::template::lua_init(ctx)?;
 
@@ -92,7 +93,7 @@ where
 
   debug!(target: MOD, "Lua call: {}.{}()", modu, fun);
   let table = match modu {
-    "" | "global" => ctx.globals(),
+    "" | "global" | "globals" => ctx.globals(),
     _ => modu
       .split('.')
       .try_fold(ctx.globals(), |tbl, modu| tbl.get::<_, Table>(modu))?,
