@@ -6,8 +6,10 @@ pub mod merge;
 pub mod progs;
 pub mod relics;
 pub mod run;
-pub mod runtime;
 pub mod template;
+
+#[cfg(feature = "async")]
+pub mod runtime;
 
 #[cfg(feature = "lua")]
 pub(crate) mod log;

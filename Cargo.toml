@@ -1,6 +1,6 @@
 [package]
 name = "lura"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Nicholas A. Zigarovich <nick@zigarovich.io>"]
 edition = "2018"
 license = "MIT"
@@ -10,7 +10,7 @@ readme = "README.md"
 description = "Devops development helpers"
 
 [features]
-default = ["all"]
+default = []
 async = ["async-std", "tokio", "tokio-compat"]
 lua = ["rlua", "rustyline"]
 all = ["async", "lua"]

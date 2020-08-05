@@ -1,6 +1,6 @@
 use {
   log,
-  rlua::{ Context, Result as LuaResult },
+  rlua::{ Context, Result as LuaResult, Table },
 };
 
 const MOD: &str = std::module_path!();
@@ -27,7 +27,10 @@ pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
     log::trace!(target: &args.0, "{0}", args.1); Ok(())
   })?)?;
 
-  ctx.globals().set("log", log)?;
+  ctx
+    .globals()
+    .get::<_, Table>("lura")?
+    .set("log", log)?;
 
   Ok(())
 }

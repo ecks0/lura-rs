@@ -1,7 +1,6 @@
 use {
   include_dir::DirEntry,
   thiserror,
-  std::path::Path,
   crate::{
     config::Config,
     template::{expand_file, expand_str},
@@ -80,7 +79,7 @@ impl<'a> Relics<'a> {
       })?)
   }
   
-  pub fn to_file<P: AsRef<Path>>(&self, path: &str, dst: P) -> Result<()> {
+  pub fn to_file(&self, path: &str, dst: &str) -> Result<()> {
     Ok(crate::fs::dump(dst, self.as_str(path)?)?)
   }
   

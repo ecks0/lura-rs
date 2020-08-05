@@ -29,10 +29,13 @@ pub fn init(ctx: &Context) -> Result<()> {
 
   debug!(target: MOD, "Lua init");
 
+  ctx.globals().set("lura", ctx.create_table()?)?;
+
   crate::progs::lua_init(ctx)?;
   crate::progs::docker::lua_init(ctx)?;
   crate::config::lua_init(ctx)?;
   crate::fs::lua_init(ctx)?;
+  crate::log::lua_init(ctx)?;
   crate::inflect::lua_init(ctx)?;
   crate::run::lua_init(ctx)?;
   crate::template::lua_init(ctx)?;

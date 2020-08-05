@@ -48,6 +48,7 @@ pub enum Error {
   #[error(transparent)]
   StdSyncMpscRecv(#[from] std::sync::mpsc::RecvError),
 
+  #[cfg(feature = "async")]
   #[error(transparent)]
   TokioRuntimeTaskJoin(#[from] tokio::task::JoinError),
 
@@ -395,7 +396,7 @@ pub async fn sh_async(contents: &str) -> Result<Output> {
 
 #[cfg(feature = "lua")]
 use {
-  rlua::{ Context, Error as LuaError, Result as LuaResult, UserData },
+  rlua::{ Context, Error as LuaError, Result as LuaResult, UserData, Table },
   std::sync::Arc,
 };
 
@@ -421,14 +422,19 @@ pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
  
   debug!(target: MOD, "Lua init");
 
-  let globals = ctx.globals();
+  let run_ = ctx.create_table()?;
 
-  globals.set("run", ctx.create_function(|_, args: (String, Vec<String>)| {
+  run_.set("run", ctx.create_function(|_, args: (String, Vec<String>)| {
     Ok(run(&args.0, args.1.iter())?)
   })?)?;
-  globals.set("sh", ctx.create_function(|_, args: (String,)| {
+  run_.set("sh", ctx.create_function(|_, args: (String,)| {
     Ok(sh(&args.0)?)
   })?)?;
+
+  ctx
+    .globals()
+    .get::<_, Table>("lura")?
+    .set("run", run_)?;
 
   Ok(())
 }

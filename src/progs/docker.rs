@@ -125,7 +125,11 @@ pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
     Ok(push(&run::runner(), &args.0)?)
   })?)?;
 
-  ctx.globals().get::<_, Table>("progs")?.set("docker", docker)?;
+  ctx
+    .globals()
+    .get::<_, Table>("lura")?
+    .get::<_, Table>("progs")?
+    .set("docker", docker)?;
   
   Ok(())
 }

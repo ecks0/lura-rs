@@ -154,7 +154,7 @@ pub fn tempdir(prefix: &str) -> Result<String> {
 
 #[cfg(feature = "lua")]
 use {
-  rlua::{ Context, Error as LuaError, Result as LuaResult },
+  rlua::{ Context, Error as LuaError, Result as LuaResult, Table },
   std::sync::Arc,
 };
 
@@ -183,7 +183,10 @@ pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
   })?)?;
   fs.set("tempdir", ctx.create_function(|_, args: (String,)| Ok(tempdir(&args.0)?))?)?;
 
-  ctx.globals().set("fs", fs)?;
+  ctx
+    .globals()
+    .get::<_, Table>("lura")?
+    .set("fs", fs)?;
 
   Ok(())
 }

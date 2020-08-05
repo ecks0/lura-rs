@@ -1,5 +1,5 @@
 use log::debug;
-use rlua::{ Context, Result as LuaResult };
+use rlua::{ Context, Result as LuaResult, Table };
 
 const MOD: &str = std::module_path!();
 
@@ -35,7 +35,10 @@ pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
     Ok(to_snake_case(&args.0))
   })?)?;
 
-  ctx.globals().set("inflect", inflect)?;
+  ctx
+    .globals()
+    .get::<_, Table>("lura")?
+    .set("inflect", inflect)?;
 
   Ok(())
 }

@@ -99,7 +99,9 @@ impl From<&Config> for Document {
 
 #[cfg(feature = "lua")]
 use {
-  rlua::{ Context, Error as LuaError, FromLua, Result as LuaResult, UserData, UserDataMethods },
+  rlua::{ 
+    Context, Error as LuaError, FromLua, Result as LuaResult, Table, UserData, UserDataMethods
+  },
   std::sync::Arc,
 };
 
@@ -153,7 +155,10 @@ pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
 
   config.set("new", ctx.create_function(|_, args: (String,)| { Ok(Config::new(&args.0)?) })?)?;
 
-  ctx.globals().set("config", config)?;
+  ctx
+    .globals()
+    .get::<_, Table>("lura")?
+    .set("config", config)?;
 
   Ok(())
 }
