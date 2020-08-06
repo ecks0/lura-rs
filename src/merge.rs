@@ -1,5 +1,9 @@
-use serde_json::Value as JsonValue;
-use toml::Value as TomlValue;
+// merge functions for json and toml
+
+use {
+  serde_json::Value as JsonValue,
+  toml::Value as TomlValue,
+};
 
 pub fn merge_json(a: &mut JsonValue, b: &JsonValue) {
   // merge json value `b` on to value `a`

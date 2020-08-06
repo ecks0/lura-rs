@@ -1,6 +1,7 @@
 pub mod docker;
 pub mod git;
 
+#[cfg(feature = "lua")]
 const MOD: &str = std::module_path!();
 
 #[cfg(feature = "lua")]

@@ -1,5 +1,4 @@
 use {
-  log::debug,
   rand::{thread_rng, Rng},
   rand::distributions::Alphanumeric,
   regex::Regex,
@@ -14,8 +13,6 @@ use {
   tempdir as tempdir_rs,
   thiserror,
 };
-
-const MOD: &str = std::module_path!();
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -58,16 +55,22 @@ impl Deref for TempDir {
 
 #[inline]
 pub fn mkdir<P: AsRef<Path>>(path: P) -> Result<()> {
+  // create a directory
+
   Ok(std::fs::create_dir(&path)?)
 }
 
 #[inline]
 pub fn chmod<P: AsRef<Path>>(path: P, mode: u32) -> Result<()> {
+  // set permissions for a path
+
   Ok(set_permissions(path, Permissions::from_mode(mode))?)
 }
 
 #[inline]
 pub fn rm<P: AsRef<Path>>(path: P) -> Result<()> {
+  // remove a path. directories are removed recursively - be careful
+
   let result = match path.as_ref().is_dir() {
     true => std::fs::remove_dir_all(path)?,
     false => std::fs::remove_file(path)?,
@@ -77,21 +80,29 @@ pub fn rm<P: AsRef<Path>>(path: P) -> Result<()> {
 
 #[inline]
 pub fn load<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
+  // load data from a file as bytes
+
   Ok(std::fs::read(path)?)
 }
 
 #[inline]
 pub fn loads<P: AsRef<Path>>(path: P) -> Result<String> {
+  // load data from a file as `String`
+
   Ok(std::fs::read_to_string(path)?)
 }
 
 #[inline]
 pub fn dump<P: AsRef<Path>, D: AsRef<[u8]>>(path: P, data: D) -> Result<()> {
+  // write data to a file
+
   Ok(std::fs::write(path, data)?)
 }
 
 #[inline]
 pub fn path_to_string(path: &Path) -> Result<String> {
+  // convert a `Path` to a `String`
+
   let result = path
     .to_path_buf()
     .into_os_string()
@@ -102,6 +113,8 @@ pub fn path_to_string(path: &Path) -> Result<String> {
 
 #[inline]
 pub fn path_buf_to_string(path: PathBuf) -> Result<String> {
+  // convert a `PathBuf` to a `String`
+
   let result = path
     .into_os_string()
     .into_string()
@@ -110,6 +123,10 @@ pub fn path_buf_to_string(path: PathBuf) -> Result<String> {
 }
 
 pub fn replace_line<P: AsRef<Path>>(path: P, regexp: &str, replace: &str) -> Result<usize> {
+  // replace the pattern `regexp` with `replace` in file at `path`. named back-references may be
+  // used. returns the number of lines that were relpaced. data will be written to `path` only if
+  // at least one match is found
+
   let re = Regex::new(regexp)?;
   let mut matched = 0usize;
   let mut output = String::new();
@@ -127,6 +144,9 @@ pub fn replace_line<P: AsRef<Path>>(path: P, regexp: &str, replace: &str) -> Res
 }
 
 pub fn tempdir(prefix: &str) -> Result<String> {
+  // create and return a temporary directory in `std::env::temp_dir()` which begins with
+  // `prefix`. the directory IS NOT automatically deleted. initial permissions of the directory
+  // will be 0o700
 
   fn randstr() -> String {
     thread_rng()
@@ -154,10 +174,13 @@ pub fn tempdir(prefix: &str) -> Result<String> {
 
 #[cfg(feature = "lua")]
 use {
+  log::debug,
   rlua::{ Context, Error as LuaError, Result as LuaResult, Table },
   std::sync::Arc,
 };
 
+#[cfg(feature = "lua")]
+const MOD: &str = std::module_path!();
 
 #[cfg(feature = "lua")]
 impl From<Error> for LuaError {

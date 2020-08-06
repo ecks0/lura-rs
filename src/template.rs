@@ -1,5 +1,10 @@
+// template expansion utilities
+//
+// this module provides methods to expand `templar` templates either to a `String` or
+// to a file. `crate::config::Config` is able to be converted to a `templar::Document`
+// and is intended to be used as the expansion environment
+
 use {
-  log::debug,
   templar::{
     Context,
     Document,
@@ -13,8 +18,6 @@ use {
     fs::dump,
   },
 };
-
-const MOD: &str = std::module_path!();
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -61,14 +64,20 @@ pub fn expand_str(template: &str, config: &Config) -> Result<String> {
 }
 
 pub fn expand_file(template: &str, config: &Config, path: &str) -> Result<()> {
+  // expand a `template` string using `env` to the file at `path`
+
   Ok(dump(path, expand_str(template, config)?)?)
 }
 
 #[cfg(feature = "lua")]
 use {
+  log::debug,
   rlua::{ Context as LuaContext, Error as LuaError, Result as LuaResult, Table },
   std::sync::Arc,
 };
+
+#[cfg(feature = "lua")]
+const MOD: &str = std::module_path!();
 
 #[cfg(feature = "lua")]
 impl From<Error> for LuaError {

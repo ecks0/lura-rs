@@ -1,5 +1,18 @@
-use std::future::Future;
-use crate::runtime::Error;
+// tokio utilities
+//
+// this module provides two ways to synchronously call a future using tokio
+
+use {
+  std::future::Future,
+  thiserror,
+};
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+
+  #[error(transparent)]
+  IOError(#[from] std::io::Error),
+}
 
 pub fn block_on<F>(future: F) -> Result<F::Output, Error>
 where

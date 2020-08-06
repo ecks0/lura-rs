@@ -1,3 +1,5 @@
+// backoff algorithms
+
 use {
   num::pow,
   num_traits::{

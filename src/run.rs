@@ -1,6 +1,16 @@
+// subprocess executor
+//
+// `Runner` is a builder similar to `std::process::Command`
+//
+// - `Runner` can be configured once and used many times
+// - `Runner` can automatically error on unexpected exit code
+// - `Runner` can read stdio automatically using either threads or tasks
+// - `Runner` can dispatch lines as they are read from stdout/stderr to callback functions
+// - `Runner` can execute either blocking or async
+
 use {
   anyhow,
-  log::{debug, error, info},
+  log::{error, info},
   std::{
     collections::BTreeMap,
     ffi::{OsStr, OsString},
@@ -19,10 +29,8 @@ use {
   tokio::io::{AsyncBufReadExt, BufReader as AsyncBufReader},
 };
 
-const MOD: &str = std::module_path!();
-
 /////
-// Errors
+// Error
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -84,6 +92,9 @@ impl Output {
   pub fn stderr(&self) -> Option<&str> { self.stderr.as_deref() }
 }
 
+/////
+// Runner, subproceses executor
+
 pub struct Runner {
   cwd: Option<String>,
   env_clear: bool,
@@ -94,9 +105,6 @@ pub struct Runner {
   enforce_code: Option<i32>,
   capture: bool,
 }
-
-/////
-// Runner, run commands using `process::Command`
 
 impl Runner {
 
@@ -114,16 +122,22 @@ impl Runner {
   }
 
   pub fn cwd(&mut self, cwd: &str) -> &mut Self {
+    // set the current working directory
+
     self.cwd = Some(cwd.to_owned());
     self
   }
 
   pub fn env_clear(&mut self) -> &mut Self {
+    // clear environment variables
+
     self.env_clear = true;
     self
   }
 
   pub fn env_remove<S: AsRef<OsStr>>(&mut self, name: S) {
+    // remove an environment variable
+
     self.env_remove.push(name.as_ref().to_os_string());
   }
 
@@ -133,6 +147,8 @@ impl Runner {
     K: AsRef<OsStr>,
     V: AsRef<OsStr>,
   {
+    // specify environment variables
+
     for (ref key, ref val) in vars {
       self.env.insert(key.as_ref().to_os_string(), val.as_ref().to_os_string());
     }
@@ -140,26 +156,36 @@ impl Runner {
   }
 
   pub fn receive_stdout(&mut self, callback: fn(&str)) -> &mut Self {
+    // add a callback to receive stdout lines
+
     self.receive_stdout.push(callback);
     self
   }
 
   pub fn receive_stderr(&mut self, callback: fn(&str)) -> &mut Self {
+    // add a callback to receive stderr lines
+
     self.receive_stderr.push(callback);
     self
   }
 
   pub fn enforce_code(&mut self, code: i32) -> &mut Self {
+    // return an error if an exit code does not match `code`
+
     self.enforce_code = Some(code);
     self
   }
 
   pub fn enforce(&mut self) -> &mut Self {
+    // return an error if an exit code is not 0
+
     self.enforce_code = Some(0i32);
     self
   }
 
   pub fn capture(&mut self) -> &mut Self {
+    // capture stdout and stderr and return them on the `Output` result
+
     self.capture = true;
     self
   }
@@ -169,6 +195,8 @@ impl Runner {
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
   {
+    // run the command `bin` with arguments `args`
+
     let mut command = std::process::Command::new(bin);
     if let Some(cwd) = &self.cwd { command.current_dir(cwd); }
     if self.env_clear { command.env_clear(); }
@@ -208,6 +236,8 @@ impl Runner {
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
   {
+    // run the command `bin` with arguments `args`
+
     let mut command = tokio::process::Command::new(bin);
     if let Some(cwd) = &self.cwd { command.current_dir(cwd); }
     if self.env_clear { command.env_clear(); }
@@ -233,7 +263,7 @@ impl Runner {
 }
 
 /////
-// stdio readers
+// stdio loops
 
 fn read_stdout_thread(
   fd: std::process::ChildStdout,
@@ -341,6 +371,10 @@ async fn read_stderr_async(
 // utility functions
 
 pub fn runner() -> Runner {
+  // return a new `Runner` with the following default configuration
+  //
+  // - enforce exit code 0
+  // - send stdout and stderr lines to the log with level `info`
 
   fn log_stdout(line: &str) { info!(target: "lura::run [out]", "{}", line); }
   fn log_stderr(line: &str) { info!(target: "lura::run [err]", "{}", line); }
@@ -358,6 +392,11 @@ where
   I: IntoIterator<Item = S>,
   S: AsRef<OsStr>,
 {
+  // run a command using a `Runner` with the following configuration
+  //
+  // - enforce exit code 0
+  // - send stdout and stderr lines to the log with level `info`
+
   Ok(runner().capture().run(bin, args)?)
 }
 
@@ -367,10 +406,19 @@ where
   I: IntoIterator<Item = S>,
   S: AsRef<OsStr>,
 {
+  // run a command using a `Runner` with the following configuration
+  //
+  // - enforce exit code 0
+  // - send stdout and stderr lines to the log with level `info`
+
   Ok(runner().capture().run_async(bin, args).await?)
 }
 
 pub fn sh(contents: &str) -> Result<Output> {
+  // run a shell command using a `Runner` with the following configuration
+  //
+  // - enforce exit code 0
+  // - send stdout and stderr lines to the log with level `info`
 
   for shell in ["bash", "sh"].iter() { // FIXME
     if let Ok(_) = which(shell) {
@@ -382,6 +430,10 @@ pub fn sh(contents: &str) -> Result<Output> {
 
 #[cfg(feature = "async")]
 pub async fn sh_async(contents: &str) -> Result<Output> {
+  // run a shell command using a `Runner` with the following configuration
+  //
+  // - enforce exit code 0
+  // - send stdout and stderr lines to the log with level `info`
 
   for shell in ["bash", "sh"].iter() { // FIXME
     if let Ok(_) = which(shell) {
@@ -396,9 +448,13 @@ pub async fn sh_async(contents: &str) -> Result<Output> {
 
 #[cfg(feature = "lua")]
 use {
+  log::debug,
   rlua::{ Context, Error as LuaError, Result as LuaResult, UserData, Table },
   std::sync::Arc,
 };
+
+#[cfg(feature = "lua")]
+const MOD: &str = std::module_path!();
 
 #[cfg(feature = "lua")]
 impl From<Error> for LuaError {

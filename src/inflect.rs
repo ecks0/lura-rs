@@ -1,5 +1,9 @@
-use log::debug;
-use rlua::{ Context, Result as LuaResult, Table };
+// lua bindings for `inflector` case converters
+
+use {
+  log::debug,
+  rlua::{ Context, Result as LuaResult, Table },
+};
 
 const MOD: &str = std::module_path!();
 

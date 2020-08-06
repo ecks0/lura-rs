@@ -1,12 +1,17 @@
+// Config file api, a simple facade over `toml::Value`
+//
+// - `Config` instances can be merged with other instances
+// - `Config` values are accessed by path string, e.g. `"foo.bar.baz"`
+// - `Config` instances can be used as a template expansion environment via
+//   the `crate::template::expand_*()` functions
+// - `Config` instances can be sent from rust to lua, and from lua to rust
+
 use {
-  log::debug,
   thiserror::Error,
   templar::Document,
   toml::Value,
   crate::merge::merge_toml,
 };
-
-const MOD: &str = std::module_path!();
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -99,11 +104,15 @@ impl From<&Config> for Document {
 
 #[cfg(feature = "lua")]
 use {
+  log::debug,
   rlua::{ 
     Context, Error as LuaError, FromLua, Result as LuaResult, Table, UserData, UserDataMethods
   },
   std::sync::Arc,
 };
+
+#[cfg(feature = "lua")]
+const MOD: &str = std::module_path!();
 
 #[cfg(feature = "lua")]
 impl From<Error> for LuaError {
@@ -150,15 +159,11 @@ impl UserData for Config {
 pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
 
   debug!(target: MOD, "Lua init");
-
   let config = ctx.create_table()?;
-
   config.set("new", ctx.create_function(|_, args: (String,)| { Ok(Config::new(&args.0)?) })?)?;
-
   ctx
     .globals()
     .get::<_, Table>("lura")?
     .set("config", config)?;
-
   Ok(())
 }

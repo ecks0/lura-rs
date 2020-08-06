@@ -1,3 +1,5 @@
+// lua support
+
 use {
   log::debug,
   rlua::{
@@ -17,7 +19,7 @@ pub use rlua::{Error, Result};
 const MOD: &str = std::module_path!();
 
 pub fn new() -> Result<Lua> {
-  // initialize and return a new lua instance
+  // initialize a new lua instance with bindings from this crate, and return it
 
   let lua = Lua::new();
   lua.context(|ctx| -> Result<()> { init(&ctx) })?;
@@ -25,12 +27,10 @@ pub fn new() -> Result<Lua> {
 }
 
 pub fn init(ctx: &Context) -> Result<()> {
-  // initialize a lua context
+  // initialize a lua context with bindings from this crate
 
   debug!(target: MOD, "Lua init");
-
   ctx.globals().set("lura", ctx.create_table()?)?;
-
   crate::progs::lua_init(ctx)?;
   crate::progs::docker::lua_init(ctx)?;
   crate::config::lua_init(ctx)?;
@@ -39,12 +39,11 @@ pub fn init(ctx: &Context) -> Result<()> {
   crate::inflect::lua_init(ctx)?;
   crate::run::lua_init(ctx)?;
   crate::template::lua_init(ctx)?;
-
   Ok(())
 }
 
 pub fn repl(lua: &Lua, prompt1: &str, prompt2: &str) {
-  // run a lua repl over stdin/stdout
+  // run a lua repl over stdin/stdout using custom prompts
 
   lua.context(|lua| {
     let mut editor = Editor::<()>::new();
@@ -87,19 +86,21 @@ pub fn repl(lua: &Lua, prompt1: &str, prompt2: &str) {
   });
 }
 
-pub fn call<'lua, A, R>(ctx: Context<'lua>, modu: &str, fun: &str, args: A) -> Result<R>
+pub fn call<'lua, A, R>(ctx: Context<'lua>, path: &str, fun: &str, args: A) -> Result<R>
 where
   A: ToLuaMulti<'lua>,
   R: FromLuaMulti<'lua>,
 {
-  // load the given lua function from the specified module path, call it, and return it result
+  // load a lua function from a table and call it. `path` is the path to the function,
+  // e.g. `"some_table.other_table", or an empty string to use the globals table. `fun`
+  // is function's key in the final table. the result of the function call is returned
 
-  debug!(target: MOD, "Lua call: {}.{}()", modu, fun);
-  let table = match modu {
-    "" | "global" | "globals" => ctx.globals(),
-    _ => modu
+  debug!(target: MOD, "Lua call: {}.{}()", path, fun);
+  let table = match path {
+    "" => ctx.globals(),
+    _ => path
       .split('.')
-      .try_fold(ctx.globals(), |tbl, modu| tbl.get::<_, Table>(modu))?,
+      .try_fold(ctx.globals(), |tbl, path| tbl.get::<_, Table>(path))?,
   };
   Ok(table
     .get::<_, Function>(fun)?

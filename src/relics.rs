@@ -1,3 +1,13 @@
+// static file management api
+//
+// `Relics` is a facade over `include_dir::Dir`
+//
+// - `Relics` hides directories from users, only returns file paths
+// - `Relics` can write static data to the filesystem
+// - `Relics` can load static data as a template and expand it using `crate::config::Config`
+//    to a string or to the filesystem
+// - `Relics` is not my favorite TNG episode, but somehow I once owned its novelization
+
 use {
   include_dir::DirEntry,
   thiserror,
@@ -39,10 +49,14 @@ pub struct Relics<'a>(&'a Dir<'a>);
 impl<'a> Relics<'a> {
 
   pub fn new(dir: &'a Dir<'a>) -> Self {
+    // return a new `Relics` instance for `dir`
+
     Self(dir)
   }
 
   pub fn find(&self, glob: &str) -> Result<impl Iterator<Item = &str>> {
+    // find path names matching `glob`
+
     Ok(self.0
       .find(glob)?
       .filter_map(|ent| {
@@ -54,14 +68,20 @@ impl<'a> Relics<'a> {
   }
 
   pub fn list(&self) -> Result<impl Iterator<Item = &str>> {
+    // list all file paths
+
     Ok(self.find("*")?)
   }
 
   pub fn present(&self, path: &str) -> bool {
+    // return `true` if file path is present, else `false`
+
     self.0.contains(path)
    }
   
   pub fn as_bytes(&self, path: &str) -> Result<&[u8]> {
+    // return static data as bytes
+
     Ok(self.0
       .get_file(path)
       .ok_or_else(|| Error::RelicMissing(path.to_owned()))
@@ -69,6 +89,8 @@ impl<'a> Relics<'a> {
   }
   
   pub fn as_str(&self, path: &str) -> Result<&str> {
+    // return static data as `&str`
+
     Ok(self.0
       .get_file(path)
       .ok_or_else(|| Error::RelicMissing(path.to_owned()))
@@ -80,14 +102,20 @@ impl<'a> Relics<'a> {
   }
   
   pub fn to_file(&self, path: &str, dst: &str) -> Result<()> {
+    // write static data to a file
+
     Ok(crate::fs::dump(dst, self.as_str(path)?)?)
   }
   
   pub fn expand_str(&self, name: &str, config: &Config) -> Result<String> {
+    // expand static template data to a `String` using `config`
+
     Ok(expand_str(self.as_str(name)?, config)?)
   }
   
   pub fn expand_file(&self, name: &str, config: &Config, path: &str) -> Result<()> {
+    // expand static template data to a file using `config`
+
     Ok(expand_file(self.as_str(name)?, config, path)?)
   }
 }

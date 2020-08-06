@@ -1,3 +1,5 @@
+// thin wrapper for git cli
+
 use {
   thiserror,
   crate::run,

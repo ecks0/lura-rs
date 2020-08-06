@@ -1,3 +1,5 @@
+// lua bindings for `log` macros
+
 use {
   log,
   rlua::{ Context, Result as LuaResult, Table },

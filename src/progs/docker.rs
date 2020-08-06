@@ -1,10 +1,9 @@
+// thin wrapper for docker cli
+
 use {
-  log::debug,
   thiserror,
   crate::run,
 };
-
-const MOD: &str = std::module_path!();
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -97,9 +96,13 @@ pub async fn push_async(
 
 #[cfg(feature = "lua")]
 use {
+  log::debug,
   rlua::{ Context, Error as LuaError, Result as LuaResult, Table },
   std::sync::Arc,
 };
+
+#[cfg(feature = "lua")]
+const MOD: &str = std::module_path!();
 
 #[cfg(feature = "lua")]
 impl From<Error> for LuaError {
