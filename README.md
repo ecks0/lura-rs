@@ -2,10 +2,14 @@
 
 Deveops helpers.
 
-Features:
+## Cargo features
 
-- `async` - include async versions of functions and methods
-- `lua`   - include `rlua` bindings
+| Feature          | Description                                            |
+| ---------------- | ------------------------------------------------------ |
+| `async`          | include async versions of functions and methods        |
+| `lua`            | include `rlua` bindings                                |
+
+## Module overview
 
 | Module           | Description                                            |
 | ---------------- | ------------------------------------------------------ |
