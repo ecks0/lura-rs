@@ -44,7 +44,7 @@ pub fn init(ctx: &Context) -> Result<()> {
 }
 
 pub fn repl(lua: &Lua, prompt1: &str, prompt2: &str) {
-  // run a lua repl over stdin/stdout using custom prompts
+  // run a lua repl over stdio using custom prompts
 
   lua.context(|lua| {
     let mut editor = Editor::<()>::new();
@@ -108,7 +108,7 @@ where
     .call::<_, R>(args)?)
 }
 
-pub fn load<'a, I, S>(ctx: &Context, module: &str, relics: &Relics, sources: I) -> Result<()>
+pub fn load<'a, I, S>(ctx: &Context, relics: &Relics, sources: I, log_target: &str) -> Result<()>
 where
   I: IntoIterator<Item = S>,
   S: AsRef<str>
@@ -119,7 +119,7 @@ where
     .into_iter()
     .try_for_each(|source| -> Result<()> {
       let source = source.as_ref();
-      debug!(target: module, "Lua load: {}", source);
+      debug!(target: log_target, "Lua load: {}", source);
       Ok(ctx
         .load(relics
           .as_str(source)
