@@ -12,6 +12,7 @@ use {
     ToLuaMulti,
   },
   rustyline::Editor,
+  crate::relics::Relics,
 };
 
 pub use rlua::{Error, Result};
@@ -91,7 +92,7 @@ where
   A: ToLuaMulti<'lua>,
   R: FromLuaMulti<'lua>,
 {
-  // load a lua function from a table and call it. `path` is the path to the function,
+  // load a lua function from a table and call it. `path` is the path to the table,
   // e.g. `"some_table.other_table", or an empty string to use the globals table. `fun`
   // is function's key in the final table. the result of the function call is returned
 
@@ -106,3 +107,25 @@ where
     .get::<_, Function>(fun)?
     .call::<_, R>(args)?)
 }
+
+pub fn load<'a, I, S>(ctx: &Context, module: &str, relics: &Relics, sources: I) -> Result<()>
+where
+  I: IntoIterator<Item = S>,
+  S: AsRef<str>
+{
+  // load lua source code from static relics and run in the given lua context
+
+  Ok(sources
+    .into_iter()
+    .try_for_each(|source| -> Result<()> {
+      let source = source.as_ref();
+      debug!(target: module, "Lua load: {}", source);
+      Ok(ctx
+        .load(relics
+          .as_str(source)
+          .map_err(Error::from)?)
+        .set_name(source)?
+        .exec()?)
+    })?)
+}
+

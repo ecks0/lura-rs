@@ -25,11 +25,11 @@ pub enum Error {
   #[error("Utf8 conversion error: `{0}`")]
   Utf8(String),
 
-  #[error(transparent)]
-  GlobPatternError(#[from] glob::PatternError),
-
   #[error("Relic missing: `{0}`")]
   RelicMissing(String),
+
+  #[error(transparent)]
+  GlobPatternError(#[from] glob::PatternError),
 
   #[error(transparent)]
   StdIo(#[from] std::io::Error),

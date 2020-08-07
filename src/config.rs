@@ -1,4 +1,4 @@
-// Config file api, a simple facade over `toml::Value`
+// Config file api
 //
 // - `Config` instances can be merged with other instances
 // - `Config` values are accessed by path string, e.g. `"foo.bar.baz"`
