@@ -113,6 +113,10 @@ pub fn rm<P: AsRef<Path>>(path: P) -> Result<()> {
   })
 }
 
+pub fn exists<P: AsRef<Path>>(path: P) -> bool {
+  path.as_ref().exists()
+}
+
 pub fn is_file<P: AsRef<Path>>(path: P) -> bool {
   path.as_ref().is_file()
 }

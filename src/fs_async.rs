@@ -32,4 +32,3 @@ pub async fn load<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
 
   Ok(tokio::fs::read(path).await?)
 }
-
