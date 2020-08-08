@@ -19,11 +19,11 @@ pub enum Error {
   #[error("Value error: {0}")]
   Value(&'static str),
 
-  #[error("Config missing: `{0}`")]
-  ConfigMissing(String),
+  #[error("Config key not found: `{0}`")]
+  KeyMissing(String),
 
-  #[error("Config value missing: `{0}`")]
-  ConfigValueMissing(String),
+  #[error("{1}: error converting to {0}")]
+  ConvertFailed(&'static str, String),
 
   #[error(transparent)]
   TomlError(#[from] toml::de::Error),
@@ -48,43 +48,48 @@ impl Config {
     self.0.clone()
   }
 
-  pub fn get(&self, key: &str) -> Option<&Value> { 
+  pub fn get(&self, key: &str) -> Result<&Value> { 
 
-    fn get<'a>(keys: &[&str], value: &'a Value) -> Option<&'a Value> {
-      let next_value = match &value.get(keys[0]) {
-        Some(next_value) => *next_value,
-        None => return None,
-      };
-      match keys.len() {
-        1 => Some(next_value),
-        _ => get(&keys[1..], next_value),
+    fn get<'a>(keys: &[&str], value: &'a Value) -> Result<&'a Value> {
+      match value.get(keys[0]) {
+        None => Err(Error::KeyMissing(keys[0].to_owned())),
+        Some(next_value) => {
+          match keys.len() {
+            1 => Ok(next_value),
+            _ => get(&keys[1..], &next_value),
+          }
+        },
       }
     }
 
-    return get(&key.split('.').collect::<Vec<&str>>()[..], &self.0);
+    match get(&key.split('.').collect::<Vec<&str>>()[..], &self.0) {
+      Err(Error::KeyMissing(subkey)) => Err(Error::KeyMissing(format!("{} ({})", key, subkey))),
+      ok => ok,
+    }
   }
 
-  pub fn as_str(&self, key: &str) -> Option<String> {
-    self
-      .get(key)
-      .and_then(|v| {
-        v.as_str()
-          .and_then(|v| {
-            Some(v.to_owned())
-          })
-      })
+  pub fn as_str<'a>(&'a self, key: &str) -> Result<&'a str> {
+    Ok(self
+      .get(key)?
+      .as_str().ok_or(Error::ConvertFailed("str", key.to_owned()))?)
   }
 
-  pub fn as_bool(&self, key: &str) -> Option<bool> {
-    self.get(key).and_then(|v| v.as_bool())
+  pub fn as_bool(&self, key: &str) -> Result<bool> {
+    Ok(self
+      .get(key)?
+      .as_bool().ok_or(Error::ConvertFailed("bool", key.to_owned()))?)
   }
 
-  pub fn as_int(&self, key: &str) -> Option<i64> {
-    self.get(key).and_then(|v| v.as_integer())
+  pub fn as_int(&self, key: &str) -> Result<i64> {
+    Ok(self
+      .get(key)?
+      .as_integer().ok_or(Error::ConvertFailed("integer", key.to_owned()))?)
   }
 
-  pub fn as_float(&self, key: &str) -> Option<f64> {
-    self.get(key).and_then(|v| v.as_float())
+  pub fn as_float(&self, key: &str) -> Result<f64> {
+    Ok(self
+      .get(key)?
+      .as_float().ok_or(Error::ConvertFailed("float", key.to_owned()))?)
   }
 }
 
