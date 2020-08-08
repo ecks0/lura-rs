@@ -113,6 +113,14 @@ pub fn rm<P: AsRef<Path>>(path: P) -> Result<()> {
   })
 }
 
+pub fn is_file<P: AsRef<Path>>(path: P) -> bool {
+  path.as_ref().is_file()
+}
+
+pub fn is_dir<P: AsRef<Path>>(path: P) -> bool {
+  path.as_ref().is_dir()
+}
+
 pub fn load<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
   // load data from a file as bytes
 
