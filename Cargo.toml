@@ -49,6 +49,7 @@ optional = true
 features = [
   "io-driver",
   "io-util",
+  "fs",
   "process",
   "time",
 ]
