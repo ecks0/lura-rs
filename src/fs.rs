@@ -127,6 +127,7 @@ pub fn load<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
   Ok(std::fs::read(path)?)
 }
 
+
 pub fn loads<P: AsRef<Path>>(path: P) -> Result<String> {
   // load data from a file as `String`
 

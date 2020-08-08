@@ -10,7 +10,7 @@ readme = "README.md"
 description = "Devops development helpers"
 
 [features]
-default = []
+default = ["all"]
 async = ["async-std", "tokio", "tokio-compat"]
 lua = ["rlua", "rustyline"]
 all = ["async", "lua"]

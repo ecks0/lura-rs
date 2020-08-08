@@ -2,14 +2,14 @@
 
 use {
   thiserror,
-  crate::run,
+  crate::run_async,
 };
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
   
   #[error(transparent)]
-  RunError(#[from] crate::run::Error),
+  LuraRunAsync(#[from] crate::run_async::Error),
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -70,8 +70,8 @@ impl Clone {
     args
   }
 
-  pub fn run(&mut self, runner: &run::Runner) -> Result<()> {
-    runner.run("git", self.run_args())?;
+  pub async fn run(&self, runner: &run_async::Runner) -> Result<()> {
+    runner.run("git", self.run_args()).await?;
     Ok(())
   }
 }
