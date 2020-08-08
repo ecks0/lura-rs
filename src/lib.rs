@@ -7,8 +7,8 @@ pub mod relics;
 pub mod run;
 pub mod template;
 
-#[cfg(feature = "async")]
-pub mod fs_async;
+// #[cfg(feature = "async")]
+// pub mod fs_async;
 
 #[cfg(feature = "async")]
 pub mod progs_async;
