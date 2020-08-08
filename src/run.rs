@@ -521,7 +521,6 @@ pub async fn dsh_async(contents: &str) -> Result<Output> {
 
 #[cfg(feature = "lua")]
 use {
-  log::debug,
   rlua::{ Context, Error as LuaError, Result as LuaResult, UserData, Table },
   std::sync::Arc,
 };
