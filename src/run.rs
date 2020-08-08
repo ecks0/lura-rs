@@ -10,7 +10,7 @@
 
 use {
   anyhow,
-  log::{error, info},
+  log::{debug, error, info},
   std::{
     collections::BTreeMap,
     ffi::{OsStr, OsString},
@@ -387,6 +387,23 @@ pub fn runner() -> Runner {
   runner
 }
 
+pub fn drunner() -> Runner {
+  // return a new `Runner` with the following default configuration
+  //
+  // - enforce exit code 0
+  // - send stdout and stderr lines to the log with level `debug`
+
+  fn log_stdout(line: &str) { debug!(target: "lura::run [out]", "{}", line); }
+  fn log_stderr(line: &str) { debug!(target: "lura::run [err]", "{}", line); }
+
+  let mut runner = Runner::new();
+  runner
+    .enforce()
+    .receive_stdout(log_stdout)
+    .receive_stderr(log_stderr);
+  runner
+}
+
 pub fn run<I, S>(bin: &str, args: I) -> Result<Output>
 where
   I: IntoIterator<Item = S>,
@@ -398,6 +415,19 @@ where
   // - send stdout and stderr lines to the log with level `info`
 
   Ok(runner().capture().run(bin, args)?)
+}
+
+pub fn drun<I, S>(bin: &str, args: I) -> Result<Output>
+where
+  I: IntoIterator<Item = S>,
+  S: AsRef<OsStr>,
+{
+  // run a command using a `Runner` with the following configuration
+  //
+  // - enforce exit code 0
+  // - send stdout and stderr lines to the log with level `debug`
+
+  Ok(drunner().capture().run(bin, args)?)
 }
 
 #[cfg(feature = "async")]
@@ -414,6 +444,20 @@ where
   Ok(runner().capture().run_async(bin, args).await?)
 }
 
+#[cfg(feature = "async")]
+pub async fn drun_async<I, S>(bin: &str, args: I) -> Result<Output>
+where
+  I: IntoIterator<Item = S>,
+  S: AsRef<OsStr>,
+{
+  // run a command using a `Runner` with the following configuration
+  //
+  // - enforce exit code 0
+  // - send stdout and stderr lines to the log with level `debug`
+
+  Ok(drunner().capture().run_async(bin, args).await?)
+}
+
 pub fn sh(contents: &str) -> Result<Output> {
   // run a shell command using a `Runner` with the following configuration
   //
@@ -423,6 +467,20 @@ pub fn sh(contents: &str) -> Result<Output> {
   for shell in ["bash", "sh"].iter() { // FIXME
     if let Ok(_) = which(shell) {
       return Ok(runner().capture().run(shell, ["-c", contents].iter())?);
+    }
+  }
+  Err(Error::ShellMissing)
+}
+
+pub fn dsh(contents: &str) -> Result<Output> {
+  // run a shell command using a `Runner` with the following configuration
+  //
+  // - enforce exit code 0
+  // - send stdout and stderr lines to the log with level `debug`
+
+  for shell in ["bash", "sh"].iter() { // FIXME
+    if let Ok(_) = which(shell) {
+      return Ok(drunner().capture().run(shell, ["-c", contents].iter())?);
     }
   }
   Err(Error::ShellMissing)
@@ -438,6 +496,21 @@ pub async fn sh_async(contents: &str) -> Result<Output> {
   for shell in ["bash", "sh"].iter() { // FIXME
     if let Ok(_) = which(shell) {
       return Ok(runner().capture().run_async(shell, ["-c", contents].iter()).await?);
+    }
+  }
+  Err(Error::ShellMissing)
+}
+
+#[cfg(feature = "async")]
+pub async fn dsh_async(contents: &str) -> Result<Output> {
+  // run a shell command using a `Runner` with the following configuration
+  //
+  // - enforce exit code 0
+  // - send stdout and stderr lines to the log with level `debug`
+
+  for shell in ["bash", "sh"].iter() { // FIXME
+    if let Ok(_) = which(shell) {
+      return Ok(drunner().capture().run_async(shell, ["-c", contents].iter()).await?);
     }
   }
   Err(Error::ShellMissing)
