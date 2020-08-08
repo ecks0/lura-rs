@@ -1,18 +1,7 @@
 pub mod docker;
-#[cfg(feature = "async")]
-pub mod docker_async;
-
 pub mod git;
-#[cfg(feature = "async")]
-pub mod git_async;
-
 //pub mod kubectl;
-//#[cfg(feature = "async")]
-//pub mod kubectl_async;
-
 pub mod systemd;
-#[cfg(feature = "async")]
-pub mod systemd_async;
 
 #[cfg(feature = "lua")]
 const MOD: &str = std::module_path!();
