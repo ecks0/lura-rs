@@ -27,7 +27,7 @@ pub enum Error {
   Regex(#[from] regex::Error),
   
   #[error(transparent)]
-  Run(#[from] crate::run::Error),
+  LuraRun(#[from] crate::run::Error),
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -51,96 +51,6 @@ impl Deref for TempDir {
   fn deref(&self) -> &Self::Target {
     &self.0
   }
-}
-
-#[inline]
-pub fn mkdir<P: AsRef<Path>>(path: P) -> Result<()> {
-  // create a directory
-
-  Ok(std::fs::create_dir(&path)?)
-}
-
-#[inline]
-pub fn chmod<P: AsRef<Path>>(path: P, mode: u32) -> Result<()> {
-  // set permissions for a path
-
-  Ok(set_permissions(path, Permissions::from_mode(mode))?)
-}
-
-#[inline]
-pub fn rm<P: AsRef<Path>>(path: P) -> Result<()> {
-  // remove a path. directories are removed recursively - be careful
-
-  let result = match path.as_ref().is_dir() {
-    true => std::fs::remove_dir_all(path)?,
-    false => std::fs::remove_file(path)?,
-  };
-  Ok(result)
-}
-
-#[inline]
-pub fn load<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
-  // load data from a file as bytes
-
-  Ok(std::fs::read(path)?)
-}
-
-#[inline]
-pub fn loads<P: AsRef<Path>>(path: P) -> Result<String> {
-  // load data from a file as `String`
-
-  Ok(std::fs::read_to_string(path)?)
-}
-
-#[inline]
-pub fn dump<P: AsRef<Path>, D: AsRef<[u8]>>(path: P, data: D) -> Result<()> {
-  // write data to a file
-
-  Ok(std::fs::write(path, data)?)
-}
-
-#[inline]
-pub fn path_to_string(path: &Path) -> Result<String> {
-  // convert a `Path` to a `String`
-
-  let result = path
-    .to_path_buf()
-    .into_os_string()
-    .into_string()
-    .map_err(|e| Error::Utf8(e))?;
-  Ok(result)
-}
-
-#[inline]
-pub fn path_buf_to_string(path: PathBuf) -> Result<String> {
-  // convert a `PathBuf` to a `String`
-
-  let result = path
-    .into_os_string()
-    .into_string()
-    .map_err(|e| Error::Utf8(e))?;
-  Ok(result)
-}
-
-pub fn replace_line<P: AsRef<Path>>(path: P, regexp: &str, replace: &str) -> Result<usize> {
-  // replace the pattern `regexp` with `replace` in file at `path`. named back-references may be
-  // used. returns the number of lines that were relpaced. data will be written to `path` only if
-  // at least one match is found
-
-  let re = Regex::new(regexp)?;
-  let mut matched = 0usize;
-  let mut output = String::new();
-  for line in loads(&path)?.split("\n") { // FIXME
-    if re.is_match(line) {
-      matched += 1;
-      output.push_str(&re.replace_all(line, replace).into_owned());
-    } else {
-      output.push_str(line);
-    };
-    output.push_str("\n");
-  }
-  if matched > 0 { dump(&path, output)?; }
-  Ok(matched)
 }
 
 pub fn tempdir(prefix: &str) -> Result<String> {
@@ -172,6 +82,97 @@ pub fn tempdir(prefix: &str) -> Result<String> {
   }
 }
 
+pub fn mkdir<P: AsRef<Path>>(path: P) -> Result<()> {
+  // create a directory
+
+  Ok(std::fs::create_dir(&path)?)
+}
+
+pub fn chmod<P: AsRef<Path>>(path: P, mode: u32) -> Result<()> {
+  // set permissions for a path
+
+  Ok(set_permissions(path, Permissions::from_mode(mode))?)
+}
+
+pub fn mv<P: AsRef<Path>>(src: P, dst: P) -> Result<()> {
+  // move a file or directory recursively
+
+  let src = &path_to_string(src.as_ref())?;
+  let dst = &path_to_string(dst.as_ref())?;
+  crate::run::run("mv", ["-f", src, dst].iter())?; // FIXME
+  Ok(())
+}
+
+pub fn rm<P: AsRef<Path>>(path: P) -> Result<()> {
+  // remove a path. directories are removed recursively - be careful
+
+  Ok(if path.as_ref().is_dir() {
+    std::fs::remove_dir_all(path)?
+  } else {
+     std::fs::remove_file(path)?
+  })
+}
+
+pub fn load<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
+  // load data from a file as bytes
+
+  Ok(std::fs::read(path)?)
+}
+
+pub fn loads<P: AsRef<Path>>(path: P) -> Result<String> {
+  // load data from a file as `String`
+
+  Ok(std::fs::read_to_string(path)?)
+}
+
+pub fn dump<P: AsRef<Path>, D: AsRef<[u8]>>(path: P, data: D) -> Result<()> {
+  // write data to a file
+
+  Ok(std::fs::write(path, data)?)
+}
+
+pub fn path_to_string(path: &Path) -> Result<String> {
+  // convert a `Path` to a `String`
+
+  let result = path
+    .to_path_buf()
+    .into_os_string()
+    .into_string()
+    .map_err(|e| Error::Utf8(e))?;
+  Ok(result)
+}
+
+pub fn path_buf_to_string(path: PathBuf) -> Result<String> {
+  // convert a `PathBuf` to a `String`
+
+  let result = path
+    .into_os_string()
+    .into_string()
+    .map_err(|e| Error::Utf8(e))?;
+  Ok(result)
+}
+
+pub fn replace_line<P: AsRef<Path>>(path: P, regexp: &str, replace: &str) -> Result<usize> {
+  // replace the pattern `regexp` with `replace` in file at `path`. named back-references may be
+  // used. returns the number of lines that were relpaced. data will be written to `path` only if
+  // at least one match is found
+
+  let re = Regex::new(regexp)?;
+  let mut matched = 0usize;
+  let mut output = String::new();
+  for line in loads(&path)?.split("\n") { // FIXME
+    if re.is_match(line) {
+      matched += 1;
+      output.push_str(&re.replace_all(line, replace).into_owned());
+    } else {
+      output.push_str(line);
+    };
+    output.push_str("\n");
+  }
+  if matched > 0 { dump(&path, output)?; }
+  Ok(matched)
+}
+
 #[cfg(feature = "lua")]
 use {
   log::debug,
@@ -196,15 +197,16 @@ pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
 
   let fs = ctx.create_table()?;
 
+  fs.set("tempdir", ctx.create_function(|_, args: (String,)| Ok(tempdir(&args.0)?))?)?;
   fs.set("mkdir", ctx.create_function(|_, args: (String,)| Ok(mkdir(&args.0)?))?)?;
   fs.set("chmod", ctx.create_function(|_, args: (String, u32)| Ok(chmod(&args.0, args.1)?))?)?;
+  fs.set("mv", ctx.create_function(|_, args: (String, String)| Ok(mv(&args.0, &args.1)?))?)?;
   fs.set("rm", ctx.create_function(|_, args: (String,)| Ok(rm(&args.0)?))?)?;
   fs.set("loads", ctx.create_function(|_, args: (String,)| Ok(loads(&args.0)?))?)?;
   fs.set("dump", ctx.create_function(|_, args: (String, String)| Ok(dump(&args.0, &args.1)?))?)?;
   fs.set("replace_line", ctx.create_function(|_, args: (String, String, String)| {
     Ok(replace_line(&args.0, &args.1, &args.2)?)
   })?)?;
-  fs.set("tempdir", ctx.create_function(|_, args: (String,)| Ok(tempdir(&args.0)?))?)?;
 
   ctx
     .globals()
