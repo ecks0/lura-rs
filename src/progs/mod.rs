@@ -1,6 +1,6 @@
 pub mod docker;
 pub mod git;
-pub mod kubectl;
+//pub mod kubectl;
 
 #[cfg(feature = "lua")]
 const MOD: &str = std::module_path!();
