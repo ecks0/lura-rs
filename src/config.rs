@@ -146,16 +146,16 @@ impl UserData for Config {
 
   fn add_methods<'lua, T: UserDataMethods<'lua, Self>>(methods: &mut T) {
     methods.add_method("as_str", |_, this, args: (String,)| {
-      this.as_str(&args.0).ok_or_else(|| Error::ConfigValueMissing(args.0).into())
+      Ok(this.as_str(&args.0)?.to_owned())
     });
     methods.add_method("as_bool", |_, this, args: (String,)| {
-      this.as_bool(&args.0).ok_or_else(|| Error::ConfigValueMissing(args.0).into())
+      Ok(this.as_bool(&args.0)?)
     });
     methods.add_method("as_int", |_, this, args: (String,)| {
-      this.as_int(&args.0).ok_or_else(|| Error::ConfigValueMissing(args.0).into())
+      Ok(this.as_int(&args.0)?)
     });
     methods.add_method("as_float", |_, this, args: (String,)| {
-      this.as_float(&args.0).ok_or_else(|| Error::ConfigValueMissing(args.0).into())
+      Ok(this.as_float(&args.0)?)
     });
   }
 }
