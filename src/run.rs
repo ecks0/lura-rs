@@ -110,10 +110,10 @@ impl Runner {
     }
   }
 
-  pub fn cwd(&mut self, cwd: &str) -> &mut Self {
+  pub fn cwd(&mut self, cwd: Option<&str>) -> &mut Self {
     // set the current working directory
 
-    self.cwd = Some(cwd.to_owned());
+    self.cwd = cwd.map(|i| i.to_owned());
     self
   }
 
@@ -158,10 +158,10 @@ impl Runner {
     self
   }
 
-  pub fn enforce_code(&mut self, code: i32) -> &mut Self {
+  pub fn enforce_code(&mut self, code: Option<i32>) -> &mut Self {
     // return an error if an exit code does not match `code`
 
-    self.enforce_code = Some(code);
+    self.enforce_code = code;
     self
   }
 
@@ -172,10 +172,10 @@ impl Runner {
     self
   }
 
-  pub fn capture(&mut self) -> &mut Self {
+  pub fn capture(&mut self, value: bool) -> &mut Self {
     // capture stdout and stderr and return them on the `Output` result
 
-    self.capture = true;
+    self.capture = value;
     self
   }
 
@@ -307,7 +307,7 @@ where
   // - enforce exit code 0
   // - send stdout and stderr lines to the log with level `info`
 
-  Ok(runner().capture().run(bin, args)?)
+  Ok(runner().capture(true).run(bin, args)?)
 }
 
 pub fn sh(contents: &str) -> Result<Output> {
@@ -318,7 +318,7 @@ pub fn sh(contents: &str) -> Result<Output> {
 
   for shell in ["bash", "sh"].iter() { // FIXME
     if let Ok(_) = which(shell) {
-      return Ok(runner().capture().run(shell, ["-c", contents].iter())?);
+      return Ok(runner().capture(true).run(shell, ["-c", contents].iter())?);
     }
   }
   Err(Error::ShellMissing)
