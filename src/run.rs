@@ -195,6 +195,7 @@ impl Runner {
       .envs(&self.env)
       .stdout(Stdio::piped())
       .stderr(Stdio::piped())
+      .stdin(Stdio::null())
       .spawn()?;
     let stdout_fd = child.stdout.take().ok_or(Error::StdioHandleMissing("stdout"))?;
     let stderr_fd = child.stderr.take().ok_or(Error::StdioHandleMissing("stderr"))?;
