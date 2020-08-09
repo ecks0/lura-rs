@@ -15,8 +15,8 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug)]
 pub struct Ansible {
+  runner: Runner,
   user: Option<String>,
   password: Option<String>,
   escalate: Option<bool>,
@@ -28,8 +28,9 @@ pub struct Ansible {
 
 impl Ansible {
 
-  pub fn new() -> Self {
+  pub fn new(runner: Runner) -> Self {
     Self {
+      runner: runner,
       user: None,
       password: None,
       escalate: None,
@@ -40,39 +41,43 @@ impl Ansible {
     }
   }
 
-  pub fn user(&mut self, user: &str) -> &mut Self {
-    self.user = Some(user.to_owned());
+  pub fn user(&mut self, user: Option<String>) -> &mut Self {
+    self.user = user;
     self
   }
 
-  pub fn password(&mut self, password: &str) -> &mut Self {
-    self.password = Some(password.to_owned());
+  pub fn password(&mut self, password: Option<String>) -> &mut Self {
+    self.password = password;
     self
   }
 
-  pub fn escalate(&mut self) -> &mut Self {
-    self.escalate = Some(true);
+  pub fn escalate(&mut self, value: bool) -> &mut Self {
+    self.escalate = Some(value);
     self
   }
 
-  pub fn escalate_password(&mut self, escalate_password: &str) -> &mut Self {
-    self.escalate_password = Some(escalate_password.to_owned());
+  pub fn escalate_password(&mut self, escalate_password: Option<String>) -> &mut Self {
+    self.escalate_password = escalate_password;
     self
   }
 
-  pub fn inventory(&mut self, path: &str) -> &mut Self {
-    self.inventory = Some(path.to_owned());
+  pub fn inventory(&mut self, path: Option<String>) -> &mut Self {
+    self.inventory = path;
+    self
+  }
+
+  pub fn clear_extra_vars(&mut self) -> &mut Self {
+    self.extra_vars.clear();
     self
   }
 
   pub fn extra_var(&mut self, k: &str, v: &str) -> &mut Self {
-
     self.extra_vars.insert(k.to_owned(), v.to_owned());
     self
   }
 
-  pub fn timeout(&mut self, timeout: usize) -> &mut Self {
-    self.timeout = Some(timeout);
+  pub fn timeout(&mut self, timeout: Option<usize>) -> &mut Self {
+    self.timeout = timeout;
     self
   }
 
@@ -95,11 +100,11 @@ impl Ansible {
     }
     if let Some(password) = &self.password {
       args.push("-e".to_owned());
-      args.push(format!("ansible_password={}", password)); // FIXME
+      args.push(format!("ansible_password={}", password));
     }
     if let Some(escalate_password) = &self.escalate_password {
       args.push("-e".to_owned());
-      args.push(format!("ansible_become_password={}", escalate_password)); // FIXME
+      args.push(format!("ansible_become_password={}", escalate_password));
     }
     for (k, v) in &self.extra_vars {
       args.push("-e".to_owned());
@@ -108,10 +113,10 @@ impl Ansible {
     args
   }
 
-  pub async fn playbook(&self, runner: Runner, playbook_path: &str) -> Result<()> {
+  pub async fn playbook(&self, playbook_path: &str) -> Result<()> {
     let mut args = self.get_args();
     args.insert(0, playbook_path.to_owned());
-    let code = &runner.run("ansible-playbook", args.iter()).await?.code();
+    let code = &self.runner.run("ansible-playbook", args.iter()).await?.code();
     if 0.eq(code) {
       Ok(())
     } else {
@@ -119,7 +124,7 @@ impl Ansible {
     }
   }
 
-  pub async fn module<I>(&self, runner: Runner, module: &str, module_args: &str) -> Result<()>
+  pub async fn module<I>(&self, module: &str, module_args: &str) -> Result<()>
   {
     let mut args = self.get_args();
     args.insert(0, "ansible".to_owned());
@@ -127,7 +132,7 @@ impl Ansible {
     args.insert(2, module.to_owned());
     args.insert(3, "-a".to_owned());
     args.insert(4, module_args.to_owned());
-    let code = &runner.run("ansible", args.iter()).await?.code();
+    let code = &self.runner.run("ansible", args.iter()).await?.code();
     if 0.eq(code) {
       Ok(())
     } else {
