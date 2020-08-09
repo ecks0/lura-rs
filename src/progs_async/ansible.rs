@@ -138,18 +138,18 @@ impl Ansible {
     args
   }
 
-  pub async fn playbook(&self, playbook_path: &str) -> Result<()> {
+  pub async fn playbook(&mut self, playbook_path: &str) -> Result<&mut Self> {
     let mut args = self.get_args();
     args.insert(0, playbook_path.to_owned());
     let code = &self.runner.run("ansible-playbook", args.iter()).await?.code();
     if 0.eq(code) {
-      Ok(())
+      Ok(self)
     } else {
       Err(Error::from(RunError::UnexpectedExitCode(*code)))
     }
   }
 
-  pub async fn module<I>(&self, module: &str, module_args: &str) -> Result<()>
+  pub async fn module<I>(&mut self, module: &str, module_args: &str) -> Result<&mut Self>
   {
     let mut args = self.get_args();
     args.insert(0, "ansible".to_owned());
@@ -159,7 +159,7 @@ impl Ansible {
     args.insert(4, module_args.to_owned());
     let code = &self.runner.run("ansible", args.iter()).await?.code();
     if 0.eq(code) {
-      Ok(())
+      Ok(self)
     } else {
       Err(Error::from(RunError::UnexpectedExitCode(*code)))
     }
