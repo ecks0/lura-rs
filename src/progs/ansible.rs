@@ -17,7 +17,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 pub struct Ansible {
   runner: Runner,
-  cwd: Option<String>,
   user: Option<String>,
   password: Option<String>,
   escalate: Option<bool>,
@@ -33,7 +32,6 @@ impl Ansible {
 
   pub fn new(runner: Runner) -> Self {
     Self {
-      cwd: None,
       runner: runner,
       user: None,
       password: None,
@@ -48,7 +46,7 @@ impl Ansible {
   }
 
   pub fn cwd(&mut self, cwd: Option<&str>) -> &mut Self {
-    self.cwd = cwd.map(|i| i.to_owned());
+    self.runner.cwd(cwd);
     self
   }
 

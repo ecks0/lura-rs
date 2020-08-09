@@ -45,6 +45,11 @@ impl Ansible {
     }
   }
 
+  pub fn cwd(&mut self, cwd: Option<&str>) -> &mut Self {
+    self.runner.cwd(cwd);
+    self
+  }
+
   pub fn user(&mut self, user: Option<String>) -> &mut Self {
     self.user = user;
     self
