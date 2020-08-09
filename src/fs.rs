@@ -38,10 +38,15 @@ type Result<T> = std::result::Result<T, Error>;
 pub struct TempDir(tempdir_rs::TempDir);
 
 impl TempDir {
+  
   pub fn new(prefix: &str) -> Result<Self> {
     let this = Self(tempdir_rs::TempDir::new(prefix)?);
     chmod(this.0.path(), 0o700)?;
     Ok(this)
+  }
+
+  pub fn to_string(&self) -> Result<String> {
+    Ok(path_to_string(self.path())?)
   }
 }
 
