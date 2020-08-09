@@ -58,7 +58,7 @@ impl Service {
   pub async fn journal(&self, lines: usize) -> Result<String> {
     Runner
       ::new()
-      .capture()
+      .capture(true)
       .enforce(true)
       .run("journalctl", ["-u", &self.0, "-n", &lines.to_string()].iter()).await?
       .stdout()
