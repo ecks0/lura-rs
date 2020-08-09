@@ -24,6 +24,8 @@ pub struct Ansible {
   inventory: Option<String>,
   extra_vars: BTreeMap<String, String>,
   timeout: Option<usize>,
+  check: Option<bool>,
+  diff: Option<bool>,
 }
 
 impl Ansible {
@@ -38,6 +40,8 @@ impl Ansible {
       inventory: None,
       extra_vars: BTreeMap::new(),
       timeout: None,
+      check: None,
+      diff: None,
     }
   }
 
@@ -81,8 +85,24 @@ impl Ansible {
     self
   }
 
+  pub fn check(&mut self, value: bool) -> &mut Self {
+    self.check = Some(value);
+    self
+  }
+
+  pub fn diff(&mut self, value: bool) -> &mut Self {
+    self.diff = Some(value);
+    self
+  }
+
   fn get_args(&self) -> Vec<String> {
     let mut args = vec![];
+    if let Some(check) = self.check {
+      if check == true { args.push("--check".to_owned()); }
+    }
+    if let Some(diff) = self.diff {
+      if diff == true { args.push("--diff".to_owned()); }
+    }
     if let Some(user) = &self.user {
       args.push("-u".to_owned());
       args.push(user.to_owned());
