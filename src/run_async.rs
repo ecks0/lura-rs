@@ -157,10 +157,10 @@ impl Runner {
     self
   }
 
-  pub fn enforce(&mut self) -> &mut Self {
+  pub fn enforce(&mut self, value: bool) -> &mut Self {
     // return an error if an exit code is not 0
 
-    self.enforce_code = Some(0i32);
+    self.enforce_code = if value == true { Some(0i32) } else { None };
     self
   }
 
@@ -263,7 +263,7 @@ pub fn runner() -> Runner {
 
   let mut runner = Runner::new();
   runner
-    .enforce()
+    .enforce(true)
     .receive_stdout(log_stdout)
     .receive_stderr(log_stderr);
   runner

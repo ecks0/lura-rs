@@ -59,7 +59,7 @@ impl Service {
     Runner
       ::new()
       .capture()
-      .enforce()
+      .enforce(true)
       .run("journalctl", ["-u", &self.0, "-n", &lines.to_string()].iter()).await?
       .stdout()
       .ok_or(Error::StdoutMissing)
