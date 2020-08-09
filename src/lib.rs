@@ -2,10 +2,18 @@ pub mod backoff;
 pub mod config;
 pub mod fs;
 pub mod merge;
-pub mod progs;
 pub mod relics;
-pub mod run;
 pub mod template;
+
+// sync
+
+#[cfg(feature = "sync")]
+pub mod run;
+
+#[cfg(feature = "sync")]
+pub mod progs;
+
+// async
 
 #[cfg(feature = "async")]
 pub mod fs_async;
@@ -18,6 +26,8 @@ pub mod run_async;
 
 #[cfg(feature = "async")]
 pub mod tokio;
+
+// lua
 
 #[cfg(feature = "lua")]
 pub mod inflect;

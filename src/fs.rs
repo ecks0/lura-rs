@@ -26,6 +26,7 @@ pub enum Error {
   #[error(transparent)]
   Regex(#[from] regex::Error),
   
+  #[cfg(feature = "sync")]
   #[error(transparent)]
   LuraRun(#[from] crate::run::Error),
 }
@@ -99,6 +100,7 @@ pub fn chmod<P: AsRef<Path>>(path: P, mode: u32) -> Result<()> {
   Ok(set_permissions(path, Permissions::from_mode(mode))?)
 }
 
+#[cfg(feature = "sync")]
 pub fn mv<P: AsRef<Path>>(src: P, dst: P) -> Result<()> {
   // move a file or directory recursively
 
@@ -135,7 +137,6 @@ pub fn load<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
 
   Ok(std::fs::read(path)?)
 }
-
 
 pub fn loads<P: AsRef<Path>>(path: P) -> Result<String> {
   // load data from a file as `String`

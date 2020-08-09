@@ -4,12 +4,12 @@
 //
 // - `Runner` can be configured once and used many times
 // - `Runner` can automatically error on unexpected exit code
-// - `Runner` can read stdio automatically using either threads or tasks
-// - `Runner` can dispatch lines as they are read from stdout/stderr to callback functions
+// - `Runner` can optionally capture and return stdout and stderr
+// - `Runner` can dispatch lines as they are read from stdout/stderr
 
 use {
   anyhow,
-  log::{debug, error, info},
+  log::{error, info},
   std::{
     collections::BTreeMap,
     ffi::{OsStr, OsString},
@@ -330,6 +330,7 @@ pub fn sh(contents: &str) -> Result<Output> {
 
 #[cfg(feature = "lua")]
 use {
+  log::debug,
   rlua::{ Context, Error as LuaError, Result as LuaResult, UserData, Table },
   std::sync::Arc,
 };

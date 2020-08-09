@@ -4,9 +4,8 @@
 //
 // - `Runner` can be configured once and used many times
 // - `Runner` can automatically error on unexpected exit code
-// - `Runner` can read stdio automatically using either threads or tasks
-// - `Runner` can dispatch lines as they are read from stdout/stderr to callback functions
-// - `Runner` can execute either blocking or async
+// - `Runner` can optionally capture and return stdout and stderr
+// - `Runner` can dispatch lines as they are read from stdout/stderr
 
 use {
   log::{error, info},
