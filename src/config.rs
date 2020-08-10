@@ -31,7 +31,7 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Config(Value);
 
 impl Config {
@@ -111,7 +111,7 @@ impl From<&Config> for Document {
 use {
   log::debug,
   rlua::{ 
-    Context, Error as LuaError, FromLua, Result as LuaResult, Table, UserData, UserDataMethods
+    Context, Error as LuaError, Result as LuaResult, Table, UserData, UserDataMethods
   },
   std::sync::Arc,
 };
@@ -123,21 +123,6 @@ const MOD: &str = std::module_path!();
 impl From<Error> for LuaError {
   fn from(err: Error) -> LuaError {
     LuaError::ExternalError(Arc::new(err))
-  }
-}
-
-#[cfg(feature = "lua")]
-impl<'lua> FromLua<'lua> for Config {
-
-  fn from_lua(lua_value: rlua::Value<'lua>, _: rlua::Context<'lua>) -> LuaResult<Config> {
-    Ok(match &lua_value {
-      rlua::Value::UserData(config) => {
-        let config = config.borrow::<Config>()
-          .map_err(|_| Error::Value("Lua `UserData` is not a `Config`"))?;
-        Ok(Self(config.0.clone()))
-      },
-      _ => Err(Error::Value("Lua `Value` is not a `Config`")),
-    }?)
   }
 }
 

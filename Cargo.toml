@@ -1,6 +1,6 @@
 [package]
 name = "lura"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Nicholas A. Zigarovich <nick@zigarovich.io>"]
 edition = "2018"
 license = "MIT"
