@@ -1,8 +1,20 @@
+// thin wrapper for kubectl
+//
+// base kubectl commands are expressed as builders, e.g. `Apply`, `Delete`, `Get`
+//
+// `Manifest` stores yaml resource data in memory, and operates on it by dumping it to
+// a temp file and passing the temp file path to kubectl.
+//
+// `Application` is an aggregate for `Manifest`
+
 use {
+  log::info,
   thiserror,
   crate::fs::{TempDir, dump},
   crate::run::Runner,
 };
+
+const MOD: &str = std::module_path!();
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -144,7 +156,6 @@ pub struct Get {
   pub namespace: Option<String>,
   pub all_namespaces: Option<bool>,
   pub selector: Option<String>,
-
 }
 
 impl Get {
@@ -255,6 +266,7 @@ impl Manifest {
   }
 
   pub fn apply(&self, runner: &Runner) -> Result<()> {
+    info!(target: MOD, "Applying: {}", self.name);
     let temp_dir = TempDir::new("lura.progs.kubectl")?;
     let path = format!("{}/manifest.yaml", temp_dir.to_string()?);
     self.dump(&path)?;
@@ -266,6 +278,7 @@ impl Manifest {
   }
   
   pub fn delete(&self, runner: &Runner) -> Result<()> {
+    info!(target: MOD, "Deleting: {}", self.name);
     let temp_dir = TempDir::new("lura.progs.kubectl")?;
     let path = format!("{}/manifest.yaml", temp_dir.to_string()?);
     self.dump(&path)?;
@@ -287,11 +300,14 @@ impl Manifest {
       .filename(&path)
       .get(&runner)?;
     match json {
-      Some(_) => Ok(true),
-      None => Ok(false),
+      Some(_) => { info!(target: MOD, "Applied: {}", self.name); Ok(true) }
+      None => { info!(target: MOD, "Not applied: {}", self.name); Ok(false) }
     }
   }
 }
+
+/////
+// Application
 
 pub struct Application {
   name: String,
