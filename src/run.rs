@@ -84,6 +84,7 @@ impl Output {
 /////
 // Runner, subproceses executor
 
+#[derive(Clone)]
 pub struct Runner {
   cwd: Option<String>,
   env_clear: bool,
