@@ -311,13 +311,13 @@ impl Manifest {
 
 pub struct Application {
   name: String,
-  manifests: Vec<Manifest>,
   runner: Runner,
+  manifests: Vec<Manifest>,
 }
 
 impl Application {
 
-  pub fn new(name: &str, manifests: Vec<Manifest>, runner: Runner) -> Self {
+  pub fn new(name: &str, runner: Runner, manifests: Vec<Manifest>) -> Self {
     Self {
       name: name.to_owned(),
       manifests: manifests,
