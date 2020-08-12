@@ -68,39 +68,3 @@ pub fn expand_file(template: &str, config: &Config, path: &str) -> Result<()> {
 
   Ok(dump(path, expand_str(template, config)?)?)
 }
-
-#[cfg(feature = "lua")]
-use {
-  log::debug,
-  rlua::{ Context as LuaContext, Error as LuaError, Result as LuaResult, Table },
-  std::sync::Arc,
-};
-
-#[cfg(feature = "lua")]
-impl From<Error> for LuaError {
-  fn from(err: Error) -> LuaError {
-    LuaError::ExternalError(Arc::new(err))
-  }
-}
-
-#[cfg(feature = "lua")]
-pub(crate) fn lua_init(ctx: &LuaContext) -> LuaResult<()> {
- 
-  debug!("Lua init");
-
-  let template = ctx.create_table()?;
-
-  template.set("expand_str", ctx.create_function(|_, args: (String, Config)| {
-    Ok(expand_str(&args.0, &args.1)?)
-  })?)?;
-  template.set("expand_file", ctx.create_function(|_, args: (String, Config, String)| {
-    Ok(expand_file(&args.0, &args.1, &args.2)?)
-  })?)?;
-
-  ctx
-    .globals()
-    .get::<_, Table>("lura")?
-    .set("template", template)?;
-
-  Ok(())
-}

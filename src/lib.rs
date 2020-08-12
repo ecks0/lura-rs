@@ -9,10 +9,10 @@ pub mod template;
 // sync
 
 #[cfg(feature = "sync")]
-pub mod run;
+pub mod progs;
 
 #[cfg(feature = "sync")]
-pub mod progs;
+pub mod run;
 
 // async
 
@@ -27,14 +27,3 @@ pub mod run_async;
 
 #[cfg(feature = "async")]
 pub mod tokio;
-
-// lua
-
-#[cfg(feature = "lua")]
-pub mod inflect;
-
-#[cfg(feature = "lua")]
-pub(crate) mod log;
-
-#[cfg(feature = "lua")]
-pub mod lua;

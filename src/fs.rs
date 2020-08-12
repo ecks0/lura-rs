@@ -163,6 +163,20 @@ pub fn dump<D: AsRef<[u8]>>(path: &str, data: D) -> Result<()> {
   Ok(std::fs::write(path, data)?)
 }
 
+pub fn basename<'a>(path: &'a str) -> Option<&'a str> {
+  match path.rfind('/') {
+    Some(pos) => Some(&path[pos..]),
+    None => None,
+  }
+}
+
+pub fn dirname<'a>(path: &'a str) -> Option<&'a str> {
+  match path.rfind('/') {
+    Some(pos) => Some(&path[..pos]),
+    None => None,
+  }
+}
+
 pub fn path_to_string(path: &Path) -> Result<String> {
   // convert a `Path` to a `String`
 
@@ -203,44 +217,4 @@ pub fn replace_line(path: &str, regexp: &str, replace: &str) -> Result<usize> {
   }
   if matched > 0 { dump(&path, output)?; }
   Ok(matched)
-}
-
-#[cfg(feature = "lua")]
-use {
-  log::debug,
-  rlua::{ Context, Error as LuaError, Result as LuaResult, Table },
-  std::sync::Arc,
-};
-
-#[cfg(feature = "lua")]
-impl From<Error> for LuaError {
-  fn from(err: Error) -> LuaError {
-    LuaError::ExternalError(Arc::new(err))
-  }
-}
-
-#[cfg(feature = "lua")]
-pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
-
-  debug!("Lua init");
-
-  let fs = ctx.create_table()?;
-
-  fs.set("tempdir", ctx.create_function(|_, args: (String,)| Ok(tempdir(&args.0)?))?)?;
-  fs.set("mkdir", ctx.create_function(|_, args: (String,)| Ok(mkdir(&args.0)?))?)?;
-  fs.set("chmod", ctx.create_function(|_, args: (String, u32)| Ok(chmod(&args.0, args.1)?))?)?;
-  fs.set("mv", ctx.create_function(|_, args: (String, String)| Ok(mv(&args.0, &args.1)?))?)?;
-  fs.set("rm", ctx.create_function(|_, args: (String,)| Ok(rm(&args.0)?))?)?;
-  fs.set("loads", ctx.create_function(|_, args: (String,)| Ok(loads(&args.0)?))?)?;
-  fs.set("dump", ctx.create_function(|_, args: (String, String)| Ok(dump(&args.0, &args.1)?))?)?;
-  fs.set("replace_line", ctx.create_function(|_, args: (String, String, String)| {
-    Ok(replace_line(&args.0, &args.1, &args.2)?)
-  })?)?;
-
-  ctx
-    .globals()
-    .get::<_, Table>("lura")?
-    .set("fs", fs)?;
-
-  Ok(())
 }
