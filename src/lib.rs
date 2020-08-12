@@ -1,6 +1,7 @@
 pub mod backoff;
 pub mod config;
 pub mod fs;
+pub mod http;
 pub mod merge;
 pub mod relics;
 pub mod template;
