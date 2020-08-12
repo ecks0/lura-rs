@@ -268,7 +268,7 @@ impl Manifest {
   pub fn apply(&self, runner: &Runner) -> Result<()> {
     info!(target: MOD, "Applying: {}", self.name);
     let temp_dir = TempDir::new("lura.progs.kubectl")?;
-    let path = format!("{}/manifest.yaml", temp_dir.to_string()?);
+    let path = format!("{}/manifest.yaml", temp_dir.as_str());
     self.dump(&path)?;
     Ok(Apply
       ::new()
@@ -280,7 +280,7 @@ impl Manifest {
   pub fn delete(&self, runner: &Runner) -> Result<()> {
     info!(target: MOD, "Deleting: {}", self.name);
     let temp_dir = TempDir::new("lura.progs.kubectl")?;
-    let path = format!("{}/manifest.yaml", temp_dir.to_string()?);
+    let path = format!("{}/manifest.yaml", temp_dir.as_str());
     self.dump(&path)?;
     Ok(Delete
       ::new()
@@ -293,7 +293,7 @@ impl Manifest {
     // returns true if any of the resources described by this manifest are applied
 
     let temp_dir = TempDir::new("lura.progs.kubectl")?;
-    let path = format!("{}/manifest.yaml", temp_dir.to_string()?);
+    let path = format!("{}/manifest.yaml", temp_dir.as_str());
     self.dump(&path)?;
     let json = Get
       ::new()

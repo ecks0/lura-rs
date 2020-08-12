@@ -36,18 +36,26 @@ type Result<T> = std::result::Result<T, Error>;
 // wrap tempdir::TempDir to set 0700
 
 #[derive(Debug)]
-pub struct TempDir(tempdir_rs::TempDir);
+pub struct TempDir {
+  dir: tempdir_rs::TempDir,
+  path: String,
+}
 
 impl TempDir {
   
   pub fn new(prefix: &str) -> Result<Self> {
-    let this = Self(tempdir_rs::TempDir::new(prefix)?);
-    chmod(this.0.path(), 0o700)?;
-    Ok(this)
+    let dir = tempdir_rs::TempDir::new(prefix)?;
+    let path = path_to_string(dir.path())?;
+    chmod(&path, 0o700)?;
+    Ok(Self { dir, path })
   }
 
-  pub fn to_string(&self) -> Result<String> {
-    Ok(path_to_string(self.path())?)
+  pub fn as_str<'a>(&'a self) -> &'a str {
+    &self.path
+  }
+
+  pub fn to_string(&self) -> String {
+    self.path.clone()
   }
 }
 
@@ -55,7 +63,7 @@ impl Deref for TempDir {
   type Target = tempdir_rs::TempDir;
 
   fn deref(&self) -> &Self::Target {
-    &self.0
+    &self.dir
   }
 }
 
@@ -88,63 +96,62 @@ pub fn tempdir(prefix: &str) -> Result<String> {
   }
 }
 
-pub fn mkdir<P: AsRef<Path>>(path: P) -> Result<()> {
+pub fn mkdir(path: &str) -> Result<()> {
   // create a directory
 
-  Ok(std::fs::create_dir(&path)?)
+  Ok(std::fs::create_dir(path)?)
 }
 
-pub fn chmod<P: AsRef<Path>>(path: P, mode: u32) -> Result<()> {
+pub fn chmod(path: &str, mode: u32) -> Result<()> {
   // set permissions for a path
 
   Ok(set_permissions(path, Permissions::from_mode(mode))?)
 }
 
 #[cfg(feature = "sync")]
-pub fn mv<P: AsRef<Path>>(src: P, dst: P) -> Result<()> {
+pub fn mv(src: &str, dst: &str) -> Result<()> {
   // move a file or directory recursively
 
-  let src = &path_to_string(src.as_ref())?;
-  let dst = &path_to_string(dst.as_ref())?;
   crate::run::run("mv", ["-f", src, dst].iter())?; // FIXME
   Ok(())
 }
 
-pub fn rm<P: AsRef<Path>>(path: P) -> Result<()> {
+pub fn rm(path: &str) -> Result<()> {
   // remove a path. directories are removed recursively - be careful
 
-  Ok(if path.as_ref().is_dir() {
+  let path = Path::new(path);
+  Ok(if path.is_dir() {
     std::fs::remove_dir_all(path)?
   } else {
      std::fs::remove_file(path)?
   })
 }
 
-pub fn exists<P: AsRef<Path>>(path: P) -> bool {
-  path.as_ref().exists()
+pub fn exists(path: &str) -> bool {
+  Path::new(path).exists()
 }
 
-pub fn is_file<P: AsRef<Path>>(path: P) -> bool {
-  path.as_ref().is_file()
+pub fn is_file(path: &str) -> bool {
+  Path::new(path).is_file()
 }
 
-pub fn is_dir<P: AsRef<Path>>(path: P) -> bool {
-  path.as_ref().is_dir()
+pub fn is_dir(path: &str) -> bool {
+  Path::new(path).is_dir()
 }
 
-pub fn load<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
+pub fn load(path: &str) -> Result<Vec<u8>> {
   // load data from a file as bytes
 
   Ok(std::fs::read(path)?)
 }
 
-pub fn loads<P: AsRef<Path>>(path: P) -> Result<String> {
+pub fn loads(path: &str) -> Result<String> {
   // load data from a file as `String`
 
   Ok(std::fs::read_to_string(path)?)
 }
 
-pub fn dump<P: AsRef<Path>, D: AsRef<[u8]>>(path: P, data: D) -> Result<()> {
+pub fn dump<D: AsRef<[u8]>>(path: &str, data: D) -> Result<()> {
   // write data to a file
 
   Ok(std::fs::write(path, data)?)
@@ -171,7 +178,7 @@ pub fn path_buf_to_string(path: PathBuf) -> Result<String> {
   Ok(result)
 }
 
-pub fn replace_line<P: AsRef<Path>>(path: P, regexp: &str, replace: &str) -> Result<usize> {
+pub fn replace_line(path: &str, regexp: &str, replace: &str) -> Result<usize> {
   // replace the pattern `regexp` with `replace` in file at `path`. named back-references may be
   // used. returns the number of lines that were relpaced. data will be written to `path` only if
   // at least one match is found

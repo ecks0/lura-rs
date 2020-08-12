@@ -46,8 +46,8 @@ where
   // ok  - handles 2xx response from server and returns `Result<T>`
   // err - handles non-2xx response from server and returns `Result<T>`
   //
-  // callers may also use `http::ok()` and `http::err()` as default
-  // implementations of `ok` and `err`
+  // callers may use `http::ok` and `http::err` as defaultimplementations
+  // of `ok` and `err`
 
   let client = Client::new();
   let builder = new(url, client);
