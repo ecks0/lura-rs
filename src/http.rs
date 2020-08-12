@@ -133,6 +133,15 @@ where
     err)
 }
 
+pub fn post_url(url: Url) -> Result<()> {
+  request(
+    url,
+    |u, c| c.post(u),
+    ok,
+    err,
+  )
+}
+
 pub fn post_and<T, O>(url: Url, ok: O) -> Result<T> 
 where
   O: Fn(Request, Response) -> Result<T>,
@@ -174,6 +183,15 @@ where
     err)
 }
 
+pub fn put_url(url: Url) -> Result<()> {
+  request(
+    url,
+    |u, c| c.put(u),
+    ok,
+    err,
+  )
+}
+
 pub fn put_or<T, E>(url: Url, err: E) -> Result<()> 
 where
   E: Fn(Request, Response) -> Result<()>,
@@ -191,6 +209,15 @@ where
   E: Fn(Request, Response) -> Result<T>,
 {
   request(url, |u, c| c.delete(u), ok, err)
+}
+
+pub fn delete_url(url: Url) -> Result<()> {
+  request(
+    url,
+    |u, c| c.delete(u),
+    ok,
+    err,
+  )
 }
 
 pub fn delete_and<T, O>(url: Url, ok: O) -> Result<T> 
