@@ -5,11 +5,14 @@ use {
   crate::fs::dump,
 };
 
-pub use reqwest::{
-  Method,
-  StatusCode,
-  Url,
-  blocking::{Client, Request, RequestBuilder, Response},
+pub use {
+  reqwest::{
+    Method,
+    StatusCode,
+    Url,
+    blocking::{Client, Request, RequestBuilder, Response},
+  },
+  url::ParseError,
 };
 
 #[derive(thiserror::Error, Debug)]

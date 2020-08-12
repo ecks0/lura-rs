@@ -38,6 +38,7 @@ templar = "0.4.0"
 include_dir = "0.6.0"
 glob = "0.3.0" # we dont' use glob, but include_dir returns errors from it
 
+url = "2.1.1"
 reqwest = { version = "0.10.7", features = ["blocking"] }
 
 rustyline = { version = "6.2.0", optional = true }
