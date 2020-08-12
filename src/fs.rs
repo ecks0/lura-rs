@@ -108,7 +108,13 @@ pub fn chmod(path: &str, mode: u32) -> Result<()> {
   Ok(set_permissions(path, Permissions::from_mode(mode))?)
 }
 
-#[cfg(feature = "sync")]
+pub fn cp(src: &str, dst: &str) -> Result<()> {
+  // move a file or directory recursively
+
+  crate::run::run("cp", ["-R", src, dst].iter())?; // FIXME
+  Ok(())
+}
+
 pub fn mv(src: &str, dst: &str) -> Result<()> {
   // move a file or directory recursively
 
