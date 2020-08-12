@@ -1,17 +1,13 @@
 use {
-  reqwest::{
-    Method,
-    StatusCode,
-    Url,
-    blocking::{
-      Client,
-      RequestBuilder,
-      Response,
-      Request,
-    },
-  },
   thiserror,
   crate::fs::dump,
+};
+
+pub use reqwest::{
+  Method,
+  StatusCode,
+  Url,
+  blocking::{Client, Request, RequestBuilder, Response},
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -58,8 +54,11 @@ where
   }
 }
 
-pub fn fail<T>(request: Request, response: Response) -> Result<T> {
-  
+pub fn ok(_: Request, _: Response) -> Result<()> {
+  Ok(())
+}
+
+pub fn err<T>(request: Request, response: Response) -> Result<T> {
   Err(Error::Fail(request.url().clone(), request.method().clone(), response.status()))
 }
 
@@ -71,6 +70,15 @@ where
   request(url, |u, c| c.get(u), ok, err)
 }
 
+pub fn get_url(url: Url) -> Result<()> {
+  request(
+    url,
+    |u, c| c.get(u),
+    ok,
+    err,
+  )
+}
+
 pub fn get_and<T, O>(url: Url, ok: O) -> Result<T> 
 where
   O: Fn(Request, Response) -> Result<T>,
@@ -79,7 +87,7 @@ where
     url,
     |u, c| c.get(u),
     ok,
-    fail)
+    err)
 }
 
 pub fn get_or<T, E>(url: Url, err: E) -> Result<()> 
@@ -89,7 +97,7 @@ where
   request(
     url,
     |u, c| c.get(u),
-    |_, _| Ok(()),
+    ok,
     err)
 }
 
@@ -98,7 +106,7 @@ pub fn get_str(url: Url) -> Result<String> {
     url,
     |u, c| c.get(u),
     |_, res| Ok(res.text()?),
-    fail)
+    err)
 }
 
 pub fn get_bytes(url: Url) -> Result<Vec<u8>> {
@@ -106,11 +114,10 @@ pub fn get_bytes(url: Url) -> Result<Vec<u8>> {
     url,
     |u, c| c.get(u),
     |_, res| Ok(res.bytes()?.to_vec()),
-    fail)
+    err)
 }
 
 pub fn get_file(url: Url, path: &str) -> Result<()> {
-  // FIXME
   Ok(dump(path, get_bytes(url)?)?)
 }
 
@@ -119,7 +126,11 @@ where
   O: Fn(Request, Response) -> Result<T>,
   E: Fn(Request, Response) -> Result<T>,
 {
-  request(url, |u, c| c.post(u), ok, err)
+  request(
+    url,
+    |u, c| c.post(u),
+    ok,
+    err)
 }
 
 pub fn post_and<T, O>(url: Url, ok: O) -> Result<T> 
@@ -130,7 +141,7 @@ where
     url,
     |u, c| c.post(u),
     ok,
-    fail)
+    err)
 }
 
 pub fn post_or<T, E>(url: Url, err: E) -> Result<()> 
@@ -140,7 +151,7 @@ where
   request(
     url,
     |u, c| c.post(u),
-    |_, _| Ok(()),
+    ok,
     err)
 }
 
@@ -160,7 +171,7 @@ where
     url,
     |u, c| c.put(u),
     ok,
-    fail)
+    err)
 }
 
 pub fn put_or<T, E>(url: Url, err: E) -> Result<()> 
@@ -170,7 +181,7 @@ where
   request(
     url,
     |u, c| c.put(u),
-    |_, _| Ok(()),
+    ok,
     err)
 }
 
@@ -190,7 +201,7 @@ where
     url,
     |u, c| c.delete(u),
     ok,
-    fail)
+    err)
 }
 
 pub fn delete_or<T, E>(url: Url, err: E) -> Result<()> 
@@ -200,6 +211,6 @@ where
   request(
     url,
     |u, c| c.delete(u),
-    |_, _| Ok(()),
+    ok,
     err)
 }
