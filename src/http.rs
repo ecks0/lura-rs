@@ -1,3 +1,5 @@
+// functional http api
+
 use {
   thiserror,
   crate::fs::dump,
@@ -37,11 +39,12 @@ where
   O: Fn(Request, Response) -> Result<T>,
   E: Fn(Request, Response) -> Result<T>,
 {
-  // composable generalization of the request process
-  //
   // new - returns a `RequestBuilder` from the provided `Url` and `Client`
   // ok  - handles 2xx response from server and returns `Result<T>`
   // err - handles non-2xx response from server and returns `Result<T>`
+  //
+  // callers may also use `http::ok()` and `http::err()` as default
+  // implementations of `ok` and `err`
 
   let client = Client::new();
   let builder = new(url, client);
@@ -172,6 +175,15 @@ where
   request(url, |u, c| c.put(u), ok, err)
 }
 
+pub fn put_url(url: Url) -> Result<()> {
+  request(
+    url,
+    |u, c| c.put(u),
+    ok,
+    err,
+  )
+}
+
 pub fn put_and<T, O>(url: Url, ok: O) -> Result<T> 
 where
   O: Fn(Request, Response) -> Result<T>,
@@ -181,15 +193,6 @@ where
     |u, c| c.put(u),
     ok,
     err)
-}
-
-pub fn put_url(url: Url) -> Result<()> {
-  request(
-    url,
-    |u, c| c.put(u),
-    ok,
-    err,
-  )
 }
 
 pub fn put_or<T, E>(url: Url, err: E) -> Result<()> 
