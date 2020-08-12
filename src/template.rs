@@ -77,9 +77,6 @@ use {
 };
 
 #[cfg(feature = "lua")]
-const MOD: &str = std::module_path!();
-
-#[cfg(feature = "lua")]
 impl From<Error> for LuaError {
   fn from(err: Error) -> LuaError {
     LuaError::ExternalError(Arc::new(err))
@@ -89,7 +86,7 @@ impl From<Error> for LuaError {
 #[cfg(feature = "lua")]
 pub(crate) fn lua_init(ctx: &LuaContext) -> LuaResult<()> {
  
-  debug!(target: MOD, "Lua init");
+  debug!("Lua init");
 
   let template = ctx.create_table()?;
 

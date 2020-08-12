@@ -14,8 +14,6 @@ use {
   crate::run::Runner,
 };
 
-const MOD: &str = std::module_path!();
-
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
 
@@ -266,7 +264,7 @@ impl Manifest {
   }
 
   pub fn apply(&self, runner: &Runner) -> Result<()> {
-    info!(target: MOD, "Applying: {}", self.name);
+    info!("Applying: {}", self.name);
     let temp_dir = TempDir::new("lura.progs.kubectl")?;
     let path = format!("{}/manifest.yaml", temp_dir.as_str());
     self.dump(&path)?;
@@ -278,7 +276,7 @@ impl Manifest {
   }
   
   pub fn delete(&self, runner: &Runner) -> Result<()> {
-    info!(target: MOD, "Deleting: {}", self.name);
+    info!("Deleting: {}", self.name);
     let temp_dir = TempDir::new("lura.progs.kubectl")?;
     let path = format!("{}/manifest.yaml", temp_dir.as_str());
     self.dump(&path)?;
@@ -300,8 +298,8 @@ impl Manifest {
       .filename(&path)
       .get(&runner)?;
     match json {
-      Some(_) => { info!(target: MOD, "Applied: {}", self.name); Ok(true) }
-      None => { info!(target: MOD, "Not applied: {}", self.name); Ok(false) }
+      Some(_) => { info!("Applied: {}", self.name); Ok(true) }
+      None => { info!("Not applied: {}", self.name); Ok(false) }
     }
   }
 }

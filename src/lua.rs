@@ -17,8 +17,6 @@ use {
 
 pub use rlua::{Error, Result};
 
-const MOD: &str = std::module_path!();
-
 pub fn new() -> Result<Lua> {
   // initialize a new lua instance with bindings from this crate, and return it
 
@@ -30,7 +28,7 @@ pub fn new() -> Result<Lua> {
 pub fn init(ctx: &Context) -> Result<()> {
   // initialize a lua context with bindings from this crate
 
-  debug!(target: MOD, "Lua init");
+  debug!("Lua init");
   ctx.globals().set("lura", ctx.create_table()?)?;
   crate::progs::lua_init(ctx)?;
   crate::progs::docker::lua_init(ctx)?;
@@ -96,7 +94,7 @@ where
   // e.g. `"some_table.other_table", or an empty string to use the globals table. `fun`
   // is function's key in the final table. the result of the function call is returned
 
-  debug!(target: MOD, "Lua call: {}.{}()", path, fun);
+  debug!("Lua call: {}.{}()", path, fun);
   let table = match path {
     "" => ctx.globals(),
     _ => path

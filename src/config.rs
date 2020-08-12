@@ -117,9 +117,6 @@ use {
 };
 
 #[cfg(feature = "lua")]
-const MOD: &str = std::module_path!();
-
-#[cfg(feature = "lua")]
 impl From<Error> for LuaError {
   fn from(err: Error) -> LuaError {
     LuaError::ExternalError(Arc::new(err))
@@ -148,7 +145,7 @@ impl UserData for Config {
 #[cfg(feature = "lua")]
 pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
 
-  debug!(target: MOD, "Lua init");
+  debug!("Lua init");
   let config = ctx.create_table()?;
   config.set("new", ctx.create_function(|_, args: (String,)| { Ok(Config::new(&args.0)?) })?)?;
   ctx

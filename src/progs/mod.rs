@@ -5,9 +5,6 @@ pub mod kubectl;
 pub mod systemd;
 
 #[cfg(feature = "lua")]
-const MOD: &str = std::module_path!();
-
-#[cfg(feature = "lua")]
 use {
   log::debug,
   rlua::{ Context, Result as LuaResult, Table },
@@ -16,7 +13,7 @@ use {
 #[cfg(feature = "lua")]
 pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
  
-  debug!(target: MOD, "Lua init");
+  debug!("Lua init");
 
   ctx
     .globals()

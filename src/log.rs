@@ -5,11 +5,9 @@ use {
   rlua::{ Context, Result as LuaResult, Table },
 };
 
-const MOD: &str = std::module_path!();
-
 pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
 
-  log::debug!(target: MOD, "Lua init");
+  log::debug!("Lua init");
 
   let log = ctx.create_table()?;
   

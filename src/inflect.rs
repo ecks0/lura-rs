@@ -5,8 +5,6 @@ use {
   rlua::{ Context, Result as LuaResult, Table },
 };
 
-const MOD: &str = std::module_path!();
-
 pub use inflector::cases::{
   camelcase::to_camel_case,
   classcase::to_class_case,
@@ -19,7 +17,7 @@ pub use inflector::cases::{
 #[cfg(feature = "lua")]
 pub(crate) fn lua_init(ctx: &Context) -> LuaResult<()> {
  
-  debug!(target: MOD, "Lua init");
+  debug!("Lua init");
   
   let inflect = ctx.create_table()?;
 
