@@ -17,6 +17,7 @@ all = ["async", "sync"]
 
 [dependencies]
 log = "0.4.11"
+lazy_static = "1.4.0"
 thiserror = "1.0.20"
 anyhow = "1.0.32"
 
@@ -35,10 +36,10 @@ Inflector = "0.11.4"
 
 templar = "0.4.0"
 include_dir = "0.6.0"
-glob = "0.3.0" # we dont' use glob, but include_dir returns errors from it
+glob = "0.3.0"
 
-url = "2.1.1"
 reqwest = { version = "0.10.7", features = ["blocking"] }
+url = "2.1.1"
 
 async-std = { version = "1.6.2", optional = true }
 tokio = { version = "0.2.22", features = ["fs", "process"], optional = true }
