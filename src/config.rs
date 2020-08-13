@@ -7,8 +7,9 @@
 // - `Config` instances can be sent from rust to lua, and from lua to rust
 
 use {
+  std::collections::BTreeMap,
   thiserror::Error,
-  templar::Document,
+  unstructured::Document,
   toml::Value,
   crate::merge::merge_toml,
 };
@@ -93,16 +94,40 @@ impl Config {
   }
 }
 
+fn toml_to_document(value: &Value) -> Document {
+  // convert a toml `Value` to an `unstructured::Document`
+
+  match value {
+    Value::Array(val) =>
+      val
+        .iter()
+        .map(|v| toml_to_document(v))
+        .collect::<Vec<Document>>()
+        .into(),
+    Value::Table(table) =>
+      table
+        .iter()
+        .map(|(k, v)| (k.into(), toml_to_document(v)))
+        .collect::<BTreeMap<Document, Document>>()
+        .into(),
+    Value::Boolean(val) => val.into(),
+    Value::Integer(val) => val.into(),
+    Value::Float(val) => val.into(),
+    Value::String(val) => val.into(),
+    Value::Datetime(val) => val.to_string().into(),
+  }
+}
+
 impl From<Config> for Document {
 
   fn from(config: Config) -> Document {
-    crate::template::toml_to_document(&config.value())
+    toml_to_document(&config.value())
   }
 }
 
 impl From<&Config> for Document {
 
   fn from(config: &Config) -> Document {
-    crate::template::toml_to_document(&config.value())
+    toml_to_document(&config.value())
   }
 }

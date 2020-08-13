@@ -13,7 +13,7 @@ use {
   thiserror,
   crate::{
     config::Config,
-    template::{expand_file, expand_str},
+    template,
   },
 };
 
@@ -110,12 +110,12 @@ impl<'a> Relics<'a> {
   pub fn expand_str(&self, name: &str, config: &Config) -> Result<String> {
     // expand static template data to a `String` using `config`
 
-    Ok(expand_str(self.as_str(name)?, config)?)
+    Ok(template::to_string(self.as_str(name)?, config)?)
   }
   
   pub fn expand_file(&self, name: &str, config: &Config, path: &str) -> Result<()> {
     // expand static template data to a file using `config`
 
-    Ok(expand_file(self.as_str(name)?, config, path)?)
+    Ok(template::to_file(self.as_str(name)?, config, path)?)
   }
 }
