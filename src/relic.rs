@@ -107,7 +107,7 @@ impl<'a> Relics<'a> {
     Ok(crate::fs::dump(dst, self.as_str(path)?)?)
   }
   
-  pub fn expand_str(&self, name: &str, config: &Config) -> Result<String> {
+  pub fn expand_string(&self, name: &str, config: &Config) -> Result<String> {
     // expand static template data to a `String` using `config`
 
     Ok(template::to_string(self.as_str(name)?, config)?)

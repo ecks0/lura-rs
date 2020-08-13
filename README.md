@@ -12,7 +12,7 @@ Deveops automation helpers.
 | `lura::http`     | functional http api                                    |
 | `lura::merge`    | toml and json merge functions                          |
 | `lura::progs`    | thin wrappers for cli programs                         |
-| `lura::relics`   | static file/template management                        |
+| `lura::relic`    | static file/template management                        |
 | `lura::run`      | subprocess executor                                    |
 | `lura::template` | template expansion utilities                           |
 
