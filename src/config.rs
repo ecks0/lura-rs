@@ -96,13 +96,13 @@ impl Config {
 impl From<Config> for Document {
 
   fn from(config: Config) -> Document {
-    crate::template::toml_to_document(&config.value()).unwrap_or(Document::default())
+    crate::template::toml_to_document(&config.value())
   }
 }
 
 impl From<&Config> for Document {
 
   fn from(config: &Config) -> Document {
-    crate::template::toml_to_document(&config.value()).unwrap_or(Document::default())
+    crate::template::toml_to_document(&config.value())
   }
 }
