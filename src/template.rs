@@ -58,22 +58,25 @@ pub(crate) fn toml_to_document(value: &Value) -> Option<Document> {
   // convert a toml `Value` to a templar `Document`
 
   match value {
+    Value::Array(val) =>
+      Some(val
+        .iter()
+        .map(|v| toml_to_document(v).unwrap_or(Document::Unit))
+        .collect::<Vec<Document>>()
+        .into()),
     Value::Table(table) => {
       let mut document = Document::default();
-      for (key, val) in table {
-        match toml_to_document(val) {
-          Some(val) => document[key] = val,
-          None => continue,
-        }
-      }
+      table
+        .iter()
+        .for_each(|(k, v)|
+          document[k] = toml_to_document(v).unwrap_or(Document::Unit));
       Some(document)
     },
     Value::Boolean(val) => Some(val.into()),
     Value::Integer(val) => Some(val.into()),
     Value::Float(val) => Some(val.into()),
     Value::String(val) => Some(val.into()),
-    Value::Array(_) => None, // FIXME
-    Value::Datetime(_) => None, // FIXME
+    Value::Datetime(val) => Some(val.to_string().into()),
   }
 }
 
