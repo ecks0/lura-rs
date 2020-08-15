@@ -2,7 +2,7 @@
 //
 // this module provides methods to expand `templar` templates either to a `String` or
 // to a file. `crate::config::Config` can be converted to an `unstructured::Document`,
-// which is understood by templar, and is intended to be used as the expansion environment
+// which is understood by templar
 //
 // this module also provides the `range()` function for templates to use
 
@@ -17,12 +17,10 @@ use {
     TemplarError,
   },
   thiserror,
-  unstructured::Document,
-  crate::{
-    config::Config,
-    fs::dump,
-  },
+  crate::fs::dump,
 };
+
+pub use unstructured::Document;
 
 lazy_static! {
   static ref TEMPLAR: Templar = {
@@ -82,17 +80,17 @@ fn range(args: Data) -> Data {
   ).into()
 }
 
-pub fn to_string(template: &str, config: &Config) -> Result<String> {
+pub fn to_string(template: &str, document: Document) -> Result<String> {
   // expand a `template` string using `env`
   
   let template = TEMPLAR.parse(template)?;
   let context = StandardContext::new();
-  context.set(config)?;
+  context.set(document)?;
   Ok(template.render(&context)?)
 }
 
-pub fn to_file(template: &str, config: &Config, path: &str) -> Result<()> {
+pub fn to_file(template: &str, document: Document, path: &str) -> Result<()> {
   // expand a `template` string using `env` to the file at `path`
 
-  Ok(dump(path, to_string(template, config)?)?)
+  Ok(dump(path, to_string(template, document)?)?)
 }

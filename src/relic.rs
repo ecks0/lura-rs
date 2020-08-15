@@ -11,10 +11,8 @@
 use {
   include_dir::DirEntry,
   thiserror,
-  crate::{
-    config::Config,
-    template,
-  },
+  unstructured::Document,
+  crate::template,
 };
 
 pub use include_dir::Dir;
@@ -28,17 +26,10 @@ pub enum Error {
   #[error("Relic missing: `{0}`")]
   RelicMissing(String),
 
-  #[error(transparent)]
-  GlobPatternError(#[from] glob::PatternError),
-
-  #[error(transparent)]
-  StdIo(#[from] std::io::Error),
-
-  #[error(transparent)]
-  LuraFs(#[from] crate::fs::Error),
-
-  #[error(transparent)]
-  LuraTemplate(#[from] crate::template::Error),
+  #[error(transparent)] GlobPatternError(#[from] glob::PatternError),
+  #[error(transparent)] StdIo(#[from] std::io::Error),
+  #[error(transparent)] LuraFs(#[from] crate::fs::Error),
+  #[error(transparent)] LuraTemplate(#[from] crate::template::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -107,15 +98,15 @@ impl<'a> Relics<'a> {
     Ok(crate::fs::dump(dst, self.as_str(path)?)?)
   }
   
-  pub fn expand_string(&self, name: &str, config: &Config) -> Result<String> {
+  pub fn expand_string(&self, name: &str, document: Document) -> Result<String> {
     // expand static template data to a `String` using `config`
 
-    Ok(template::to_string(self.as_str(name)?, config)?)
+    Ok(template::to_string(self.as_str(name)?, document)?)
   }
   
-  pub fn expand_file(&self, name: &str, config: &Config, path: &str) -> Result<()> {
+  pub fn expand_file(&self, name: &str, document: Document, path: &str) -> Result<()> {
     // expand static template data to a file using `config`
 
-    Ok(template::to_file(self.as_str(name)?, config, path)?)
+    Ok(template::to_file(self.as_str(name)?, document, path)?)
   }
 }

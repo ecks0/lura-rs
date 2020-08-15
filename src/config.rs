@@ -1,33 +1,41 @@
 // Config file api
 //
+// - `Config` is a facade for `toml::Value`
 // - `Config` instances can be merged with other instances
 // - `Config` values are accessed by path string, e.g. `"foo.bar.baz"`
 // - `Config` instances can be used as a template expansion environment via
 //   the `crate::template::expand_*()` functions
-// - `Config` instances can be sent from rust to lua, and from lua to rust
+// - `Config` methods return `Result` rather than `Option`
 
 use {
   std::collections::BTreeMap,
   thiserror::Error,
+  crate::merge,
+};
+
+pub use {
+  toml::{
+    value::{Array, Table},
+    map::Map,
+    Value,
+  },
   unstructured::Document,
-  toml::Value,
-  crate::merge::merge_toml,
 };
 
 #[derive(Error, Debug)]
 pub enum Error {
 
-  #[error("Value error: {0}")]
-  Value(&'static str),
+  #[error("{1}: error converting to {0}")]
+  ConvertFailed(&'static str, String),
 
   #[error("Config key not found: `{0}`")]
   KeyMissing(String),
 
-  #[error("{1}: error converting to {0}")]
-  ConvertFailed(&'static str, String),
-
   #[error(transparent)]
   TomlError(#[from] toml::de::Error),
+
+  #[error("Value error: {0}")]
+  Value(&'static str),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -42,11 +50,11 @@ impl Config {
   }
 
   pub fn update(&mut self, other: &Config) {
-    merge_toml(&mut self.0, &other.0)
+    merge::toml(&mut self.0, &other.0)
   }
 
-  pub fn value(&self) -> Value {
-    self.0.clone()
+  pub fn value(&self) -> &Value {
+    &self.0
   }
 
   pub fn get(&self, key: &str) -> Result<&Value> { 
@@ -69,32 +77,53 @@ impl Config {
     }
   }
 
+  pub fn contains(&self, key: &str) -> bool {
+    match self.get(key) {
+      Ok(_) => true,
+      Err(_) => false,
+    }
+  }
+
   pub fn as_str<'a>(&'a self, key: &str) -> Result<&'a str> {
-    Ok(self
+    self
       .get(key)?
-      .as_str().ok_or(Error::ConvertFailed("str", key.to_owned()))?)
+      .as_str().ok_or(Error::ConvertFailed("str", key.to_owned()))
   }
 
   pub fn as_bool(&self, key: &str) -> Result<bool> {
-    Ok(self
+    self
       .get(key)?
-      .as_bool().ok_or(Error::ConvertFailed("bool", key.to_owned()))?)
+      .as_bool().ok_or(Error::ConvertFailed("bool", key.to_owned()))
   }
 
   pub fn as_int(&self, key: &str) -> Result<i64> {
-    Ok(self
+    self
       .get(key)?
-      .as_integer().ok_or(Error::ConvertFailed("integer", key.to_owned()))?)
+      .as_integer().ok_or(Error::ConvertFailed("integer", key.to_owned()))
   }
 
   pub fn as_float(&self, key: &str) -> Result<f64> {
-    Ok(self
+    self
       .get(key)?
-      .as_float().ok_or(Error::ConvertFailed("float", key.to_owned()))?)
+      .as_float().ok_or(Error::ConvertFailed("float", key.to_owned()))
+  }
+
+  pub fn as_map(&self, key: &str) -> Result<&Map<String, Value>> {
+    self
+      .get(key)?
+      .as_table()
+      .ok_or(Error::ConvertFailed("map", key.to_owned()))
+  }
+
+  pub fn as_vec(&self, key: &str) -> Result<&Vec<Value>> {
+    self
+      .get(key)?
+      .as_array()
+      .ok_or(Error::ConvertFailed("array", key.to_owned()))
   }
 }
 
-fn toml_to_document(value: &Value) -> Document {
+pub fn toml_to_document(value: &Value) -> Document {
   // convert a toml `Value` to an `unstructured::Document`
 
   match value {

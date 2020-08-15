@@ -1,29 +1,51 @@
+// backoff
+#[cfg(feature = "backoff")]
 pub mod backoff;
+
+// config
+#[cfg(feature = "config")]
 pub mod config;
+
+// fs
+#[cfg(feature = "fs")]
 pub mod fs;
-pub mod http;
-pub mod merge;
-pub mod relic;
-pub mod template;
 
-// sync
-
-#[cfg(feature = "sync")]
-pub mod progs;
-
-#[cfg(feature = "sync")]
-pub mod run;
-
-// async
-
-#[cfg(feature = "async")]
+// fs_async
+#[cfg(feature = "fs_async")]
 pub mod fs_async;
 
-#[cfg(feature = "async")]
+// http
+#[cfg(feature = "http")]
+pub mod http;
+
+// merge
+#[cfg(feature = "merge")]
+pub mod merge;
+
+// progs
+#[cfg(feature = "progs")]
+pub mod progs;
+
+// progs_async
+#[cfg(feature = "progs_async")]
 pub mod progs_async;
 
-#[cfg(feature = "async")]
+// relic
+#[cfg(feature = "relic")]
+pub mod relic;
+
+// run
+#[cfg(feature = "run")]
+pub mod run;
+
+// run_async
+#[cfg(feature = "run_async")]
 pub mod run_async;
 
-#[cfg(feature = "async")]
+// template
+#[cfg(feature = "template")]
+pub mod template;
+
+// tokio_rt
+#[cfg(feature = "tokio_rt")]
 pub mod tokio;

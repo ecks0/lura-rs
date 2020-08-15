@@ -17,6 +17,7 @@ use {
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
 
+  
   #[error("Utf8 conversion error")]
   Utf8(OsString),
 
@@ -26,7 +27,6 @@ pub enum Error {
   #[error(transparent)]
   Regex(#[from] regex::Error),
   
-  #[cfg(feature = "sync")]
   #[error(transparent)]
   LuraRun(#[from] crate::run::Error),
 }
