@@ -7,14 +7,14 @@ license = "MIT"
 homepage = "https://github.com/ecks0/lura-rs"
 repository = "https://github.com/ecks0/lura-rs"
 readme = "README.md"
-description = "Devops development helpers"
+description = "Devops automation helpers"
 
 [features]
 
 default = ["all"]
 all = [
-  "backoff", "config", "fs", "fs_async", "http", "progs",
-  "progs_async", "merge", "relic", "run", "run_async",
+  "backoff", "config", "fs", "fs_async", "http", "logging",
+  "progs", "progs_async", "merge", "relic", "run", "run_async",
   "template", "tokio_rt",
 ]
 
@@ -23,6 +23,7 @@ config = ["unstructured", "merge", "toml"]
 fs = ["regex", "run", "tempdir", "which"]
 fs_async = ["fs", "run_async"]
 http = ["anyhow", "fs", "reqwest", "url"]
+logging = ["chrono", "fern"]
 progs = ["fs", "run", "serde_json"]
 progs_async = ["fs_async", "run_async"]
 merge = ["serde_json", "toml"]
@@ -30,7 +31,7 @@ relic = ["fs", "glob", "include_dir", "template"]
 run = ["anyhow", "rand", "serde_json", "which"]
 run_async = ["async-std", "fs", "tokio", "which"]
 template = ["fs", "templar", "unstructured"]
-tokio_rt = ["tokio", "tokio-compat"]
+tokio_rt = ["bytes", "futures", "tokio", "tokio-compat", "tokio-util"]
 
 [dependencies]
 
@@ -40,6 +41,10 @@ thiserror = "1.0.20"
 
 anyhow = { version = "1.0.32", optional = true }
 async-std = { version = "1.6.2", optional = true }
+bytes = { version = "0.5.6", optional = true }
+chrono = { version = "0.4.15", optional = true }
+fern = { version = "0.6.0", optional = true }
+futures = { version = "0.3.5", optional = true }
 glob = { version = "0.3.0", optional = true }
 include_dir = { version = "0.6.0", optional = true }
 num = { version = "0.3.0", optional = true }
@@ -52,6 +57,7 @@ tempdir = { version = "0.3.7", optional = true }
 templar = { version = "0.4.0", optional = true }
 tokio = { version = "0.2.22", features = ["fs", "process"], optional = true }
 tokio-compat = { version = "0.1.6", optional = true }
+tokio-util = { version = "0.3.1", features = ["codec"], optional = true }
 toml = { version = "0.5.6", optional = true }
 unstructured = { version = "0.3.1", optional = true }
 url = { version = "2.1.1", optional = true }

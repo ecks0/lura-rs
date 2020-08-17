@@ -18,6 +18,10 @@ pub mod fs_async;
 #[cfg(feature = "http")]
 pub mod http;
 
+// logging
+#[cfg(feature = "logging")]
+pub mod logging;
+
 // merge
 #[cfg(feature = "merge")]
 pub mod merge;

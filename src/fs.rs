@@ -16,22 +16,17 @@ use {
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-
   
-  #[error("Utf8 conversion error")]
+  #[error("Utf8 conversion error:")]
   Utf8(OsString),
 
-  #[error(transparent)]
-  Io(#[from] std::io::Error),
-
-  #[error(transparent)]
-  Regex(#[from] regex::Error),
-  
-  #[error(transparent)]
-  LuraRun(#[from] crate::run::Error),
+  #[error(transparent)] LuraRunAsync(#[from] crate::run_async::Error),
+  #[error(transparent)] Io(#[from] std::io::Error),
+  #[error(transparent)] LuraRun(#[from] crate::run::Error),
+  #[error(transparent)] Regex(#[from] regex::Error),
 }
 
-type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 // wrap tempdir::TempDir to set 0700
 
@@ -111,14 +106,14 @@ pub fn chmod(path: &str, mode: u32) -> Result<()> {
 pub fn cp(src: &str, dst: &str) -> Result<()> {
   // move a file or directory recursively
 
-  crate::run::run("cp", ["-R", src, dst].iter())?; // FIXME
+  crate::run::run("cp", ["-R", src, dst].iter())?;
   Ok(())
 }
 
 pub fn mv(src: &str, dst: &str) -> Result<()> {
   // move a file or directory recursively
 
-  crate::run::run("mv", ["-f", src, dst].iter())?; // FIXME
+  crate::run::run("mv", ["-f", src, dst].iter())?;
   Ok(())
 }
 
@@ -160,9 +155,10 @@ pub fn loads(path: &str) -> Result<String> {
 pub fn dump<D: AsRef<[u8]>>(path: &str, data: D) -> Result<()> {
   // write data to a file
 
-  Ok(std::fs::write(path, data)?)
+  Ok(std::fs::write(path, data.as_ref())?)
 }
 
+// FIXME
 pub fn basename<'a>(path: &'a str) -> Option<&'a str> {
   match path.rfind('/') {
     Some(pos) => Some(&path[pos..]),
@@ -170,6 +166,7 @@ pub fn basename<'a>(path: &'a str) -> Option<&'a str> {
   }
 }
 
+// FIXME
 pub fn dirname<'a>(path: &'a str) -> Option<&'a str> {
   match path.rfind('/') {
     Some(pos) => Some(&path[..pos]),

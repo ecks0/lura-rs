@@ -1,10 +1,13 @@
 // tokio utilities
-//
-// this module provides two ways to synchronously call a future using tokio
 
 use {
-  std::future::Future,
-  thiserror,
+  bytes::Bytes,
+  futures::{
+    Future,
+    stream::{self, Stream, StreamExt, TryStreamExt},
+  },
+  tokio::io::{AsyncRead, Result as IoResult},
+  tokio_util::codec,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -30,4 +33,21 @@ where
   // run a future to completion on the current thread
 
   Ok(tokio_compat::runtime::current_thread::Runtime::new()?.block_on_std(future))
+}
+
+pub fn into_byte_stream<A>(async_read: A) -> impl Stream<Item=IoResult<u8>>
+where
+  A: AsyncRead,
+{
+  codec::FramedRead::new(async_read, codec::BytesCodec::new())
+    .map_ok(|bytes| stream::iter(bytes).map(Ok))
+    .try_flatten()
+}
+
+pub fn into_bytes_stream<A>(async_read: A) -> impl Stream<Item=IoResult<Bytes>>
+where
+  A: AsyncRead,
+{
+  codec::FramedRead::new(async_read, codec::BytesCodec::new())
+    .map_ok(|bytes| bytes.freeze())
 }
