@@ -1,12 +1,11 @@
 // static file management api
 //
-// `Relics` is a facade over `include_dir::Dir`
+// `Assets` is a facade over `include_dir::Dir`
 //
-// - `Relics` hides directories from users, only returns file paths
-// - `Relics` can write static data to the filesystem
-// - `Relics` can load static data as a template and expand it using `crate::config::Config`
+// - `Assets` hides directories from users, only returns file paths
+// - `Assets` can write static data to the filesystem
+// - `Assets` can load static data as a template and expand it using `crate::config::Config`
 //    to a string or to the filesystem
-// - `Relics` is not my favorite TNG episode, but somehow I once owned its novelization
 
 use {
   include_dir::DirEntry,
@@ -23,8 +22,8 @@ pub enum Error {
   #[error("Utf8 conversion error: `{0}`")]
   Utf8(String),
 
-  #[error("Relic missing: `{0}`")]
-  RelicMissing(String),
+  #[error("Asset missing: `{0}`")]
+  AssetMissing(String),
 
   #[error(transparent)] GlobPatternError(#[from] glob::PatternError),
   #[error(transparent)] StdIo(#[from] std::io::Error),
@@ -35,12 +34,12 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Clone, Debug)]
-pub struct Relics<'a>(&'a Dir<'a>);
+pub struct Assets<'a>(&'a Dir<'a>);
 
-impl<'a> Relics<'a> {
+impl<'a> Assets<'a> {
 
   pub fn new(dir: &'a Dir<'a>) -> Self {
-    // return a new `Relics` instance for `dir`
+    // return a new `Assets` instance for `dir`
 
     Self(dir)
   }
@@ -75,7 +74,7 @@ impl<'a> Relics<'a> {
 
     Ok(self.0
       .get_file(path)
-      .ok_or_else(|| Error::RelicMissing(path.to_owned()))
+      .ok_or_else(|| Error::AssetMissing(path.to_owned()))
       .and_then(|file| Ok(file.contents()))?)
   }
   
@@ -84,7 +83,7 @@ impl<'a> Relics<'a> {
 
     Ok(self.0
       .get_file(path)
-      .ok_or_else(|| Error::RelicMissing(path.to_owned()))
+      .ok_or_else(|| Error::AssetMissing(path.to_owned()))
       .and_then(|file| {
         file
           .contents_utf8()

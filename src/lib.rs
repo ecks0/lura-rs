@@ -1,3 +1,7 @@
+// asset
+#[cfg(feature = "asset")]
+pub mod asset;
+
 // config
 #[cfg(feature = "config")]
 pub mod config;
@@ -17,11 +21,6 @@ pub mod logging;
 // merge
 #[cfg(feature = "merge")]
 pub mod merge;
-
-// relic
-#[cfg(feature = "relic")]
-pub mod relic;
-
 
 // template
 #[cfg(feature = "template")]

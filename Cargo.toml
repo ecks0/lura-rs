@@ -1,6 +1,6 @@
 [package]
 name = "lura"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Nicholas A. Zigarovich <nick@zigarovich.io>"]
 edition = "2018"
 license = "MIT"
@@ -12,14 +12,14 @@ description = "Devops automation helpers"
 [features]
 
 default = ["all"]
-all = ["config", "fs", "http", "logging", "merge", "relic", "template"]
+all = ["asset", "config", "fs", "http", "logging", "merge", "template"]
 
+asset = ["fs", "glob", "include_dir", "template"]
 config = ["unstructured", "merge", "toml"]
 fs = ["rand", "regex", "tempdir"]
 http = ["anyhow", "fs", "reqwest", "url"]
 logging = ["chrono", "fern"]
 merge = ["serde_json", "toml"]
-relic = ["fs", "glob", "include_dir", "template"]
 template = ["fs", "templar", "unstructured"]
 
 [dependencies]
