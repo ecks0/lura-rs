@@ -95,7 +95,7 @@ impl<'a> Relics<'a> {
   pub fn to_file(&self, path: &str, dst: &str) -> Result<()> {
     // write static data to a file
 
-    Ok(crate::fs::dump(dst, self.as_str(path)?)?)
+    Ok(std::fs::write(dst, self.as_str(path)?)?)
   }
   
   pub fn expand_string(&self, name: &str, document: Document) -> Result<String> {

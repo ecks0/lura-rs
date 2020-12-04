@@ -2,7 +2,6 @@
 
 use {
   thiserror,
-  crate::fs::dump,
 };
 
 pub use {
@@ -28,10 +27,10 @@ pub enum Error {
   Fail(Url, Method, StatusCode),
 
   #[error(transparent)]
-  LuraFs(#[from] crate::fs::Error),
+  Reqwest(#[from] reqwest::Error),
 
   #[error(transparent)]
-  Reqwest(#[from] reqwest::Error),
+  StdIo(#[from] std::io::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -124,7 +123,7 @@ pub fn get_bytes(url: Url) -> Result<Vec<u8>> {
 }
 
 pub fn get_file(url: Url, path: &str) -> Result<()> {
-  Ok(dump(path, get_bytes(url)?)?)
+  Ok(std::fs::write(path, get_bytes(url)?)?)
 }
 
 pub fn post<T, O, E>(url: Url, ok: O, err: E) -> Result<T>

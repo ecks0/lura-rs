@@ -16,15 +16,9 @@ where
   Ok(fern::Dispatch
     ::new()
     .format(|out, message, record| {
-      let target = record.target();
-      let target = match target.len() {
-        len if len > 25 => &target[target.len()-25..],
-        _=> target,
-      };
       out.finish(format_args!(
-        "{0: <18} {1: >25} {2: <5} {3}",
+        "{0: <18} {1: >5} {2}",
         chrono::Local::now().format("%m/%d %H:%M:%S%.3f"),
-        target,
         record.level(),
         message,
       ))        

@@ -31,11 +31,8 @@ pub enum Error {
   #[error("Config key not found: `{0}`")]
   KeyMissing(String),
 
-  #[error(transparent)]
-  TomlError(#[from] toml::de::Error),
-
-  #[error("Value error: {0}")]
-  Value(&'static str),
+  #[error(transparent)] TomlError(#[from] toml::de::Error),
+  #[error("Value error: {0}")] Value(&'static str),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

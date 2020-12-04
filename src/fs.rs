@@ -20,9 +20,7 @@ pub enum Error {
   #[error("Utf8 conversion error:")]
   Utf8(OsString),
 
-  #[error(transparent)] LuraRunAsync(#[from] crate::run_async::Error),
   #[error(transparent)] Io(#[from] std::io::Error),
-  #[error(transparent)] LuraRun(#[from] crate::run::Error),
   #[error(transparent)] Regex(#[from] regex::Error),
 }
 
@@ -76,102 +74,23 @@ pub fn tempdir(prefix: &str) -> Result<String> {
 
   loop {
     let temp_dir = format!("{0}/{1}.{2}", path_buf_to_string(env::temp_dir())?, prefix, randstr());
-    match mkdir(&temp_dir) {
+    match std::fs::create_dir(&temp_dir) {
       Ok(()) => {
         chmod(&temp_dir, 0o700)?;
         return Ok(temp_dir);
       },
       Err(err) => {
-        if let Error::Io(err) = &err {
-          if let std::io::ErrorKind::AlreadyExists = err.kind() { continue; }
-        }
-        return Err(err);
+        if let std::io::ErrorKind::AlreadyExists = err.kind() { continue; }
+        Err(err)?;
       },
     }
   }
-}
-
-pub fn mkdir(path: &str) -> Result<()> {
-  // create a directory
-
-  Ok(std::fs::create_dir(path)?)
 }
 
 pub fn chmod(path: &str, mode: u32) -> Result<()> {
   // set permissions for a path
 
   Ok(set_permissions(path, Permissions::from_mode(mode))?)
-}
-
-pub fn cp(src: &str, dst: &str) -> Result<()> {
-  // move a file or directory recursively
-
-  crate::run::run("cp", ["-R", src, dst].iter())?;
-  Ok(())
-}
-
-pub fn mv(src: &str, dst: &str) -> Result<()> {
-  // move a file or directory recursively
-
-  crate::run::run("mv", ["-f", src, dst].iter())?;
-  Ok(())
-}
-
-pub fn rm(path: &str) -> Result<()> {
-  // remove a path. directories are removed recursively - be careful
-
-  let path = Path::new(path);
-  Ok(if path.is_dir() {
-    std::fs::remove_dir_all(path)?
-  } else {
-     std::fs::remove_file(path)?
-  })
-}
-
-pub fn exists(path: &str) -> bool {
-  Path::new(path).exists()
-}
-
-pub fn is_file(path: &str) -> bool {
-  Path::new(path).is_file()
-}
-
-pub fn is_dir(path: &str) -> bool {
-  Path::new(path).is_dir()
-}
-
-pub fn load(path: &str) -> Result<Vec<u8>> {
-  // load data from a file as bytes
-
-  Ok(std::fs::read(path)?)
-}
-
-pub fn loads(path: &str) -> Result<String> {
-  // load data from a file as `String`
-
-  Ok(std::fs::read_to_string(path)?)
-}
-
-pub fn dump<D: AsRef<[u8]>>(path: &str, data: D) -> Result<()> {
-  // write data to a file
-
-  Ok(std::fs::write(path, data.as_ref())?)
-}
-
-// FIXME
-pub fn basename<'a>(path: &'a str) -> Option<&'a str> {
-  match path.rfind('/') {
-    Some(pos) => Some(&path[pos..]),
-    None => None,
-  }
-}
-
-// FIXME
-pub fn dirname<'a>(path: &'a str) -> Option<&'a str> {
-  match path.rfind('/') {
-    Some(pos) => Some(&path[..pos]),
-    None => None,
-  }
 }
 
 pub fn path_to_string(path: &Path) -> Result<String> {
@@ -203,7 +122,7 @@ pub fn replace_line(path: &str, regexp: &str, replace: &str) -> Result<usize> {
   let re = Regex::new(regexp)?;
   let mut matched = 0usize;
   let mut output = String::new();
-  for line in loads(&path)?.split("\n") { // FIXME
+  for line in std::fs::read_to_string(&path)?.split("\n") { // FIXME
     if re.is_match(line) {
       matched += 1;
       output.push_str(&re.replace_all(line, replace).into_owned());
@@ -212,6 +131,6 @@ pub fn replace_line(path: &str, regexp: &str, replace: &str) -> Result<usize> {
     };
     output.push_str("\n");
   }
-  if matched > 0 { dump(&path, output)?; }
+  if matched > 0 { std::fs::write(&path, output)?; }
   Ok(matched)
 }

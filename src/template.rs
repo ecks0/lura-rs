@@ -17,7 +17,6 @@ use {
     TemplarError,
   },
   thiserror,
-  crate::fs::dump,
 };
 
 pub use unstructured::Document;
@@ -36,11 +35,8 @@ pub enum Error {
   #[error("Value error: {0}")]
   Value(&'static str),
 
-  #[error(transparent)]
-  LuraFs(#[from] crate::fs::Error),
-
-  #[error(transparent)]
-  Templar(#[from] templar::TemplarError),
+  #[error(transparent)] StdIo(#[from] std::io::Error),
+  #[error(transparent)] Templar(#[from] templar::TemplarError),
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -92,5 +88,5 @@ pub fn to_string(template: &str, document: Document) -> Result<String> {
 pub fn to_file(template: &str, document: Document, path: &str) -> Result<()> {
   // expand a `template` string using `env` to the file at `path`
 
-  Ok(dump(path, to_string(template, document)?)?)
+  Ok(std::fs::write(path, to_string(template, document)?)?)
 }
